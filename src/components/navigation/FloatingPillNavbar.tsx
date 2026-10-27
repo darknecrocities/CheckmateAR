@@ -118,10 +118,10 @@ const styles = StyleSheet.create({
   pillPod: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#141414',
+    backgroundColor: 'rgba(20, 20, 24, 0.85)',
     borderRadius: radii.pill,
-    borderWidth: 1,
-    borderColor: '#262626',
+    borderWidth: 1.2,
+    borderColor: 'rgba(255, 255, 255, 0.16)',
     paddingHorizontal: spacing.xs,
     paddingVertical: 5,
     gap: 4,

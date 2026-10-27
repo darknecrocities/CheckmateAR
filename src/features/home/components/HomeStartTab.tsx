@@ -1,7 +1,8 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, Dimensions } from 'react-native';
 import { ArrowRight, ShieldCheck } from 'lucide-react-native';
 import { ChessPieceArtwork } from '../../../components/chess/ChessPieceArtwork';
+import { LiquidGlassCard } from '../../../components/ui/LiquidGlassCard';
 import { spacing, radii } from '../../../theme/spacing';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -22,11 +23,12 @@ export const HomeStartTab: React.FC<HomeStartTabProps> = ({
 }) => {
   return (
     <>
-      {/* Horizontal Featured Banner Card with Offset 3D Knight */}
+      {/* Horizontal Featured Banner Card with Liquid Glassmorphism & Offset 3D Knight */}
       <Text style={styles.sectionHeader}>Featured System</Text>
-      <TouchableOpacity
+      <LiquidGlassCard
+        variant="featured"
+        causticPosition="right"
         style={styles.featuredCard}
-        activeOpacity={0.88}
         onPress={onStartScan}
       >
         <View style={styles.featuredContent}>
@@ -47,15 +49,16 @@ export const HomeStartTab: React.FC<HomeStartTabProps> = ({
         <View style={styles.offsetPieceWrap}>
           <ChessPieceArtwork piece="n" size={135} color="white" />
         </View>
-      </TouchableOpacity>
+      </LiquidGlassCard>
 
-      {/* 2-Column Cube Cards Grid (Matching Reference "My Last Work") */}
+      {/* 2-Column Cube Cards Grid with Liquid Refraction */}
       <Text style={styles.sectionHeader}>Core Capabilities</Text>
       <View style={styles.cubeGrid}>
         {/* Cube Card 1: Live AR Scan */}
-        <TouchableOpacity
+        <LiquidGlassCard
+          variant="cube"
+          causticPosition="corner"
           style={styles.cubeCard}
-          activeOpacity={0.85}
           onPress={onStartScan}
         >
           <Text style={styles.cubeDate}>CameraX Stream</Text>
@@ -63,12 +66,13 @@ export const HomeStartTab: React.FC<HomeStartTabProps> = ({
           <View style={styles.cubeOffsetPiece}>
             <ChessPieceArtwork piece="b" size={82} color="white" />
           </View>
-        </TouchableOpacity>
+        </LiquidGlassCard>
 
         {/* Cube Card 2: Deep Stockfish Analysis */}
-        <TouchableOpacity
+        <LiquidGlassCard
+          variant="cube"
+          causticPosition="corner"
           style={styles.cubeCard}
-          activeOpacity={0.85}
           onPress={onOpenAnalysis}
         >
           <Text style={styles.cubeDate}>Depth 14 Multi-PV</Text>
@@ -76,12 +80,13 @@ export const HomeStartTab: React.FC<HomeStartTabProps> = ({
           <View style={styles.cubeOffsetPiece}>
             <ChessPieceArtwork piece="q" size={82} color="white" />
           </View>
-        </TouchableOpacity>
+        </LiquidGlassCard>
 
         {/* Cube Card 3: 3D Mascot Studio */}
-        <TouchableOpacity
+        <LiquidGlassCard
+          variant="cube"
+          causticPosition="corner"
           style={styles.cubeCard}
-          activeOpacity={0.85}
           onPress={onOpenMascot}
         >
           <Text style={styles.cubeDate}>CAD Blueprint</Text>
@@ -89,12 +94,13 @@ export const HomeStartTab: React.FC<HomeStartTabProps> = ({
           <View style={styles.cubeOffsetPiece}>
             <ChessPieceArtwork piece="n" size={82} color="white" />
           </View>
-        </TouchableOpacity>
+        </LiquidGlassCard>
 
         {/* Cube Card 4: AI Tactical Coach */}
-        <TouchableOpacity
+        <LiquidGlassCard
+          variant="cube"
+          causticPosition="corner"
           style={styles.cubeCard}
-          activeOpacity={0.85}
           onPress={onOpenCoach}
         >
           <Text style={styles.cubeDate}>Grounded Mentor</Text>
@@ -102,11 +108,11 @@ export const HomeStartTab: React.FC<HomeStartTabProps> = ({
           <View style={styles.cubeOffsetPiece}>
             <ChessPieceArtwork piece="k" size={82} color="white" />
           </View>
-        </TouchableOpacity>
+        </LiquidGlassCard>
       </View>
 
       {/* Offline Guarantee Footer Banner */}
-      <View style={styles.offlineCard}>
+      <LiquidGlassCard variant="default" causticPosition="none" style={styles.offlineCard}>
         <ShieldCheck size={18} color="#FFFFFF" />
         <View style={styles.offlineTextWrap}>
           <Text style={styles.offlineTitle}>100% On-Device Offline Privacy</Text>
@@ -114,7 +120,7 @@ export const HomeStartTab: React.FC<HomeStartTabProps> = ({
             Camera analysis and Stockfish engine run entirely local without network latency.
           </Text>
         </View>
-      </View>
+      </LiquidGlassCard>
     </>
   );
 };
@@ -130,12 +136,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xs,
   },
   featuredCard: {
-    backgroundColor: '#0F0F0F',
-    borderRadius: radii.xl,
-    borderWidth: 1,
-    borderColor: '#262626',
     padding: spacing.lg,
-    overflow: 'hidden',
     position: 'relative',
     minHeight: 165,
     justifyContent: 'center',
@@ -151,6 +152,8 @@ const styles = StyleSheet.create({
     paddingVertical: 3,
     backgroundColor: 'rgba(255, 255, 255, 0.12)',
     borderRadius: radii.sm,
+    borderWidth: 0.8,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
   },
   tagPillText: {
     color: '#FFFFFF',
@@ -163,7 +166,7 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   featuredSub: {
-    color: '#A3A3A3',
+    color: '#D4D4D4',
     fontSize: 11,
     lineHeight: 16,
   },
@@ -191,18 +194,11 @@ const styles = StyleSheet.create({
   },
   cubeCard: {
     width: CUBE_CARD_WIDTH,
-    height: 145,
-    backgroundColor: '#0F0F0F',
-    borderRadius: radii.xl,
-    borderWidth: 1,
-    borderColor: '#262626',
     padding: spacing.md,
     position: 'relative',
-    overflow: 'hidden',
-    justifyContent: 'space-between',
   },
   cubeDate: {
-    color: '#737373',
+    color: '#A3A3A3',
     fontSize: 10,
     fontWeight: '600',
   },
@@ -222,10 +218,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.md,
-    backgroundColor: '#0A0A0A',
-    borderRadius: radii.lg,
-    borderWidth: 1,
-    borderColor: '#1F1F1F',
     padding: spacing.md,
     marginTop: spacing.lg,
   },

@@ -8,6 +8,7 @@ import {
   getStrategiesByCategory,
 } from '../../../services/chess/strategyLibrary';
 import { ChessPieceArtwork } from '../../../components/chess/ChessPieceArtwork';
+import { LiquidGlassCard } from '../../../components/ui/LiquidGlassCard';
 import { spacing, radii } from '../../../theme/spacing';
 
 interface HomeStrategyTabProps {
@@ -56,13 +57,14 @@ export const HomeStrategyTab: React.FC<HomeStrategyTabProps> = ({ onAnalyzePosit
         )}
       </ScrollView>
 
-      {/* Strategy Cards List */}
+      {/* Strategy Cards List with Liquid Glassmorphism */}
       <View style={styles.strategyList}>
         {filteredStrategies.map((item: StrategyItem) => (
-          <TouchableOpacity
+          <LiquidGlassCard
             key={item.id}
+            variant="strategy"
+            causticPosition="right"
             style={styles.strategyCard}
-            activeOpacity={0.88}
             onPress={() => onAnalyzePosition(item.fen)}
           >
             <View style={styles.strategyContent}>
@@ -85,11 +87,11 @@ export const HomeStrategyTab: React.FC<HomeStrategyTabProps> = ({ onAnalyzePosit
               </View>
             </View>
 
-            {/* Offset 3D Chess Piece with Fade Texture */}
+            {/* Offset 3D Chess Piece with Fade Texture & Liquid Refraction */}
             <View style={styles.strategyOffsetPiece}>
               <ChessPieceArtwork piece={item.featuredPiece} size={100} color="white" />
             </View>
-          </TouchableOpacity>
+          </LiquidGlassCard>
         ))}
       </View>
     </>
@@ -107,9 +109,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     paddingVertical: 6,
     borderRadius: radii.pill,
-    backgroundColor: '#141414',
+    backgroundColor: 'rgba(20, 20, 24, 0.65)',
     borderWidth: 1,
-    borderColor: '#262626',
+    borderColor: 'rgba(255, 255, 255, 0.12)',
   },
   activeCategoryPill: {
     backgroundColor: '#FFFFFF',
@@ -129,12 +131,7 @@ const styles = StyleSheet.create({
     marginTop: spacing.sm,
   },
   strategyCard: {
-    backgroundColor: '#0F0F0F',
-    borderRadius: radii.xl,
-    borderWidth: 1,
-    borderColor: '#262626',
     padding: spacing.md,
-    overflow: 'hidden',
     position: 'relative',
     minHeight: 155,
   },
@@ -149,10 +146,12 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   strategyCategoryBadge: {
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    paddingHorizontal: 7,
+    paddingVertical: 2.5,
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
     borderRadius: radii.sm,
+    borderWidth: 0.8,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
   },
   strategyCategoryText: {
     color: '#FFFFFF',

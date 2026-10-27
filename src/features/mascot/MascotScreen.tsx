@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, Dimensions } from 'react-native';
 import { ArrowLeft, MoreHorizontal, Shield, Sparkles, Zap, Layers } from 'lucide-react-native';
 import { ChessMascot3D } from '../../components/mascot/ChessMascot3D';
+import { LiquidGlassCard } from '../../components/ui/LiquidGlassCard';
 import { colors } from '../../theme/colors';
 import { spacing, radii } from '../../theme/spacing';
 import { typography } from '../../theme/typography';
@@ -34,40 +35,40 @@ export const MascotScreen: React.FC<MascotScreenProps> = ({ onBack, onStartAR })
         {/* Interactive 3D Mascot Viewport */}
         <ChessMascot3D onSpawnInAR={onStartAR} />
 
-        {/* Blueprint Specifications Grid */}
+        {/* Blueprint Specifications Grid with Liquid Glass Optics */}
         <Text style={styles.sectionHeader}>CAD Specifications</Text>
         <View style={styles.specsGrid}>
-          <View style={styles.specCard}>
-            <Layers size={18} color="#A3A3A3" />
+          <LiquidGlassCard variant="spec" causticPosition="corner" style={styles.specCard}>
+            <Layers size={18} color="#D4D4D4" />
             <Text style={styles.specLabel}>Height Bounds</Text>
             <Text style={styles.specValue}>150 MM</Text>
-          </View>
-          <View style={styles.specCard}>
-            <Zap size={18} color="#A3A3A3" />
+          </LiquidGlassCard>
+          <LiquidGlassCard variant="spec" causticPosition="corner" style={styles.specCard}>
+            <Zap size={18} color="#D4D4D4" />
             <Text style={styles.specLabel}>Pedestal Diameter</Text>
             <Text style={styles.specValue}>70 MM</Text>
-          </View>
-          <View style={styles.specCard}>
-            <Shield size={18} color="#A3A3A3" />
+          </LiquidGlassCard>
+          <LiquidGlassCard variant="spec" causticPosition="corner" style={styles.specCard}>
+            <Shield size={18} color="#D4D4D4" />
             <Text style={styles.specLabel}>Tactical Role</Text>
             <Text style={styles.specValue}>Fork & Battery</Text>
-          </View>
-          <View style={styles.specCard}>
-            <Sparkles size={18} color="#A3A3A3" />
+          </LiquidGlassCard>
+          <LiquidGlassCard variant="spec" causticPosition="corner" style={styles.specCard}>
+            <Sparkles size={18} color="#D4D4D4" />
             <Text style={styles.specLabel}>Material Shading</Text>
             <Text style={styles.specValue}>Obsidian Ceramic</Text>
-          </View>
+          </LiquidGlassCard>
         </View>
 
-        {/* Tactical Mascot Bio */}
-        <View style={styles.bioCard}>
+        {/* Tactical Mascot Bio with Liquid Meniscus Sheen */}
+        <LiquidGlassCard variant="default" causticPosition="right" style={styles.bioCard}>
           <Text style={styles.bioTitle}>About The Knight</Text>
           <Text style={styles.bioText}>
             The only piece on the board capable of jumping over friendly and hostile lines.
             Sculpted with a sharp muzzle and flared crest, The Grandmaster Knight embodies the
             unconventional tactical strikes that define CheckmateAR's real-time engine analysis.
           </Text>
-        </View>
+        </LiquidGlassCard>
       </ScrollView>
     </SafeAreaView>
   );
@@ -134,15 +135,11 @@ const styles = StyleSheet.create({
   },
   specCard: {
     width: (SCREEN_WIDTH - 40) / 2,
-    backgroundColor: '#0A0A0A',
-    borderRadius: radii.lg,
-    borderWidth: 1,
-    borderColor: '#262626',
     padding: spacing.md,
     gap: 4,
   },
   specLabel: {
-    color: '#737373',
+    color: '#A3A3A3',
     fontSize: 11,
     fontWeight: '500',
     marginTop: 4,
@@ -153,10 +150,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   bioCard: {
-    backgroundColor: '#0A0A0A',
-    borderRadius: radii.lg,
-    borderWidth: 1,
-    borderColor: '#262626',
     padding: spacing.md,
     marginTop: spacing.sm,
     gap: 6,
