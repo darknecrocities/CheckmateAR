@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none">
+  <!-- Minimalist Geometric Knight Mascot (Pose: Thinking/Analyzing) -->
+  <g id="mascot-body">
+    <!-- Base Plate -->
+    <rect x="55" y="155" width="90" height="14" rx="7" fill="#1E2235" stroke="#00E5FF" stroke-width="2"/>
+    <!-- Torso Column -->
+    <path d="M70 155 L75 125 C75 115 82 108 92 105 C108 100 118 88 120 72 C122 56 114 42 100 38 C94 36 90 40 88 46 C86 52 76 56 68 60 C58 64 54 74 58 84 C62 92 72 96 76 102 C72 118 70 138 70 155 Z" fill="#131722" stroke="#00E676" stroke-width="4" stroke-linejoin="round"/>
+    <!-- Head Eye Visor (AR Sensor Lens) -->
+    <ellipse cx="94" cy="56" rx="8" ry="4" fill="#00E5FF"/>
+    <!-- Subtle Thinking Pulse Ring -->
+    <circle cx="94" cy="56" r="16" stroke="#00E5FF" stroke-width="1.5" stroke-dasharray="3 3" opacity="0.6"/>
+  </g>
+</svg>

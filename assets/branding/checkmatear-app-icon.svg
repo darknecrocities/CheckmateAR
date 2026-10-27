@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <!-- Dark Rounded Squircle Base -->
+  <rect width="512" height="512" rx="116" fill="#0A0B10"/>
+  
+  <!-- Subtle Internal Grid Matrix -->
+  <path d="M128 170 H384 M128 256 H384 M128 342 H384" stroke="#00E5FF" stroke-width="4" stroke-opacity="0.18"/>
+  <path d="M170 128 V384 M256 128 V384 M342 128 V384" stroke="#00E5FF" stroke-width="4" stroke-opacity="0.18"/>
+
+  <!-- High-Precision AR HUD Corner Brackets -->
+  <path d="M96 160 V96 H160" stroke="#00E5FF" stroke-width="14" stroke-linecap="round"/>
+  <path d="M352 96 H416 V160" stroke="#00E5FF" stroke-width="14" stroke-linecap="round"/>
+  <path d="M416 352 V416 H352" stroke="#00E5FF" stroke-width="14" stroke-linecap="round"/>
+  <path d="M160 416 H96 V352" stroke="#00E5FF" stroke-width="14" stroke-linecap="round"/>
+
+  <!-- Iconic Knight Silhouette in Emerald -->
+  <path d="M190 380 H322 V356 C322 340 310 326 290 320 C296 300 302 264 296 230 C290 196 264 168 230 162 C222 162 216 168 216 182 C216 196 196 204 182 212 C168 220 162 240 168 260 C174 274 194 282 200 288 C194 316 190 344 190 380 Z" fill="#00E676" stroke="#00E676" stroke-width="6" stroke-linejoin="round"/>
+  <circle cx="236" cy="216" r="12" fill="#0A0B10"/>
+</svg>

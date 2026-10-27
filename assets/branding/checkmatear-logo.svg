@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" fill="none">
+  <!-- AR Perspective Grid Matrix -->
+  <path d="M16 28 L112 28 M16 64 L112 64 M16 100 L112 100" stroke="#00E5FF" stroke-width="2" stroke-opacity="0.35" stroke-dasharray="4 4"/>
+  <path d="M28 16 L28 112 M64 16 L64 112 M100 16 L100 112" stroke="#00E5FF" stroke-width="2" stroke-opacity="0.35" stroke-dasharray="4 4"/>
+
+  <!-- AR Corner Reticle Brackets -->
+  <path d="M16 36 V16 H36" stroke="#00E5FF" stroke-width="4" stroke-linecap="round"/>
+  <path d="M92 16 H112 V36" stroke="#00E5FF" stroke-width="4" stroke-linecap="round"/>
+  <path d="M112 92 V112 H92" stroke="#00E5FF" stroke-width="4" stroke-linecap="round"/>
+  <path d="M36 112 H16 V92" stroke="#00E5FF" stroke-width="4" stroke-linecap="round"/>
+
+  <!-- Minimalist Geometric Chess Knight -->
+  <path d="M44 96 H84 V88 C84 84 80 80 74 78 C76 72 78 62 76 52 C74 42 66 34 56 32 C54 32 52 34 52 38 C52 42 46 44 42 46 C38 48 36 54 38 60 C40 64 46 66 48 68 C46 76 44 84 44 96 Z" fill="#00E676" stroke="#00E676" stroke-width="3" stroke-linejoin="round"/>
+  <!-- Knight Eye Reticle / Aperture -->
+  <circle cx="58" cy="48" r="3.5" fill="#090A0F"/>
+</svg>
