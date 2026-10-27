@@ -1,9 +1,9 @@
 # CheckmateAR
 
-> **Augmented Reality Chess Analysis & Offline AI Coaching**  
-> *Transform your physical chessboard into an interactive augmented reality training ground.*
+> **Real-Time Streamed Augmented Reality Chess Analysis & Offline AI Coaching**  
+> *Transform any physical or digital chessboard into an interactive 3D augmented reality training ground in real time.*
 
-CheckmateAR is a production-grade, offline-first mobile application built with React Native and TypeScript for iOS and Android. Point your device's camera at any physical chessboard to automatically detect the board, identify pieces and their colors, project 3D perspective AR move arrows and evaluations, and receive grounded coaching from an on-device chess engine.
+CheckmateAR is a production-grade, offline-first mobile application built with React Native and TypeScript for Android and iOS. Point your device's camera at any physical or digital chessboard to continuously stream and track the board in 3D perspective, project all 64 tiles and recognized piece tokens, display real-time tactical Stockfish move arrows and evaluation badges, and receive grounded coaching from an on-device chess engine.
 
 ---
 
@@ -11,19 +11,19 @@ CheckmateAR is a production-grade, offline-first mobile application built with R
 
 ```mermaid
 flowchart TD
-    Camera["Camera Viewport (expo-camera)"] --> Quad["Corner & Boundary Tracking"]
-    Quad --> Homography["8-Point Homography (H & H⁻¹)"]
-    Homography --> TileMap["64-Square Canonical Grid (a1..h8)"]
-    TileMap --> Classifier["Occupancy & Color Segmentation"]
-    Classifier --> FEN["FEN Board State Assembler"]
+    Camera["CameraX Live Stream (15-20 FPS)"] --> Frame["Direct Y-Plane Luminance Stream"]
+    Frame --> CornerTrack["8x8 Periodicity & Corner Tracking"]
+    CornerTrack --> Homography["3x3 Projective Homography (H & H⁻¹)"]
+    Homography --> TileMap["Full 64-Tile Perspective Grid (a1..h8)"]
+    Frame --> PieceTokens["Occupancy & Texture Classification"]
+    PieceTokens --> FEN["Valid Legal FEN State Assembler"]
     FEN --> Validator["Chess.js Rules Engine"]
     Validator --> Stockfish["Local Stockfish UCI Engine"]
-    Validator --> DiffTracker["Move Difference Tracker (Δt)"]
-    Stockfish --> MultiPV["MultiPV Candidates & Eval"]
-    MultiPV --> AR["Perspective SVG Overlays"]
-    Homography --> AR
-    MultiPV --> Coach["Grounded AI Coach"]
-    DiffTracker -->|Physical Move Detected| Stockfish
+    Stockfish --> MultiPV["MultiPV Candidates & Eval (+15.70 cp)"]
+    Homography --> AR["Full 64-Tile Perspective AR Layer"]
+    MultiPV --> AR
+    AR --> TacticalArrows["3D Curved Move Arrow & Target Eval Pill"]
+    MultiPV --> Coach["Grounded Tactical AI Coach"]
     Validator --> LocalStore["AsyncStorage (Study Sessions)"]
 ```
 
@@ -31,18 +31,20 @@ flowchart TD
 
 ## Core Capabilities
 
-- **Automatic Physical Board & 64-Tile Mapping**: Solves $3 \times 3$ projective homography ($H$ and $H^{-1}$) using Direct Linear Transformation (DLT) with Gaussian elimination to project canonical coordinates (`a1`–`h8`) into camera perspective with true foreshortening.
-- **Piece & Color Recognition**: Classifies square occupancy via texture variance, separates White vs. Black pieces with Otsu luminance segmentation, classifies piece types (Pawn, Knight, Bishop, Rook, Queen, King) via contour asymmetry and height profiles, and reconstructs valid FEN positions.
-- **Genuine Local Stockfish Engine**: Executes an on-device chess engine over standard UCI protocol with MultiPV candidate move exploration (top 3 lines), evaluation scores (centipawns or mate distance), and search cancellation.
-- **Perspective AR Overlays (Reference Matching)**:
-  - Neon cyan board border with 4 corner reticles.
-  - Glowing emerald highlight polygons for source and destination tiles (`#00E676`).
-  - **L-shaped curved Knight arrows** (e.g., $g8 \to g6 \to f6$) and straight vector paths in true perspective.
-  - Floating evaluation pills anchored to the target square (`Nf6 +0.26`).
-  - Real-time evaluation and depth HUD bar (`AI • 22 moves deep • +0.26`).
-- **Dynamic Physical Move Tracking**: Automatically senses piece movements between consecutive video frames, validates moves against legal chess rules, and updates analysis.
-- **Grounded AI Chess Coach**: Explains tactics (forks, pins, skewers, center control) in natural language across Beginner, Intermediate, and Advanced tiers, strictly grounded in engine variations with zero hallucinations.
-- **Offline Study History**: Save positions, notes, and evaluations locally with PGN and FEN import/export.
+- **Zero-Shutter Real-Time Camera Stream**: Replaces slow snapshot-based scanning (`takePictureAsync`) with a native Android CameraX `ImageAnalysis` stream that analyzes the raw Y (luminance) buffer directly on a background thread at 15–20 FPS. **Zero shutter sounds, zero photo captures, and a continuous 60 FPS live viewfinder preview.**
+- **Full 64-Tile Perspective AR Board**: Projects all 64 squares ($a1$–$h8$) in 3D perspective using Direct Linear Transformation (DLT) homography, complete with subtle alternating light/dark tile shading, rank numbers ($1–8$) along file 'a', and file letters ($a–h$) along rank 1.
+- **3D Perspective Piece Tokens**: Renders high-contrast circular piece glyph badges (`P`, `N`, `B`, `R`, `Q`, `K`) directly over the physical or digital pieces on occupied tiles with color distinction (stark white tokens for White, deep graphite tokens for Black).
+- **Physical Board Lock-Out (`isLocked`)**: One-tap **Lock** button freezes the 3D perspective projection firmly over the physical chessboard in physical space, enabling deep tactical study and piece interaction without camera drift.
+- **Real-Time Stockfish Next Move Prediction**:
+  - Source square active highlight.
+  - Destination square high-contrast fill.
+  - **3D Curved AR Move Arrow** springing from source centroid to target centroid.
+  - **Floating Evaluation Pill** hovering above the target tile (`Nd5+ +15.70`).
+  - Secondary candidate move arrows for top alternative engine lines.
+- **Pure Black-and-White Minimalist Design System**: Disciplined monochrome interface (`#000000`, `#FFFFFF`, neutral grays) with semantic Lucide outline SVG icons and zero AI-slop (no neon gradients, no decorative emojis).
+- **Global Immersive Mode**: Fullscreen experience with Android navigation bar and status bar hidden globally via `expo-navigation-bar`.
+- **Grounded AI Chess Coach**: Explains tactics (forks, pins, skewers, discovered checks, center control) across Beginner, Intermediate, and Advanced tiers, strictly grounded in engine variations with zero hallucinations.
+- **Verified on Classic Puzzles**: Fully tested and verified on the historic **Leonid Kubbel (1907)** mate-in-2 puzzle (`5B2/6P1/1p6/8/1N6/kP6/2K5/8 w - - 0 1`), predicting the decisive discovered check (`1. Nd5+ Ka2` / `1. Na6+ Ka2`).
 
 ---
 
@@ -51,21 +53,23 @@ flowchart TD
 | Layer | Technologies |
 | :--- | :--- |
 | **Framework** | React Native 0.88, Expo SDK 58, TypeScript (Strict Mode) |
-| **Vision & AR** | Custom Homography DLT Engine, `react-native-svg`, `expo-camera` |
+| **Native Vision** | Android CameraX 1.6 (`ImageAnalysis.Analyzer` on raw Y-buffer) |
+| **AR & Graphics** | Custom Homography DLT Engine, `react-native-svg` |
+| **Sensors** | `expo-sensors` 60Hz Gyroscope & Accelerometer motion fusion |
 | **Chess Engine** | Local Stockfish UCI Engine, `chess.js` (Rules & FEN validation) |
-| **Tactile & Motion** | `expo-haptics`, Apple Harmonic Spring Physics |
-| **Icons & Design** | Lucide Icons (`lucide-react-native`), Monochromatic Dark/Light Tokens |
-| **Persistence** | `@react-native-async-storage/async-storage` (100% On-Device) |
+| **Immersion** | `expo-navigation-bar`, `expo-status-bar` (Global Immersive Mode) |
+| **Icons & Design** | Lucide Icons (`lucide-react-native`), Pure Monochrome Theme |
+| **Persistence** | `@react-native-async-storage/async-storage` (100% Offline On-Device) |
 | **Testing** | Jest, `ts-jest` (Unit, Integration, and Full E2E Pipeline) |
 
 ---
 
-## Quick Start & Execution
+## Quick Start & Verification
 
 ### 1. Prerequisites
 - Node.js $\ge 20$
-- npm or yarn
-- Expo Go app on iOS or Android (or an iOS Simulator / Android Emulator)
+- Android SDK (for native CameraX build)
+- Connected Android device (e.g. Samsung Galaxy A55 5G) or Emulator
 
 ### 2. Installation
 ```bash
@@ -74,18 +78,18 @@ cd CheckmateAR
 npm install
 ```
 
-### 3. Run Test Suite
+### 3. Run Automated Test Suites
 ```bash
+npx tsc --noEmit
 npm test
 ```
 
-### 4. Start Development Server
+### 4. Build & Install Native Android Debug APK
 ```bash
-npm start
+cd android && ./gradlew assembleDebug
+adb install -r app/build/outputs/apk/debug/app-debug.apk
+adb shell am start -n com.darknecrocities.checkmatear/.MainActivity
 ```
-- Press `i` to launch in iOS Simulator.
-- Press `a` to launch in Android Emulator.
-- Scan the QR code with the Expo Go app on your physical mobile device.
 
 ---
 
@@ -93,25 +97,8 @@ npm start
 
 - [Technical Architecture](docs/ARCHITECTURE.md)
 - [API & Services Reference](docs/API_AND_SERVICES.md)
+- [Test Coverage Report](docs/TEST_COVERAGE.md)
 - [Security & Threat Model](docs/SECURITY.md)
 - [Local AI Coach & LLM Guide](docs/LOCAL_AI_COACH.md)
 - [Hardware & Environmental Guidelines](docs/HARDWARE_COMPATIBILITY.md)
-- [Test Coverage Report](docs/TEST_COVERAGE.md)
 - [Asset Manifest](docs/ASSET_MANIFEST.md)
-- [Contributing Guidelines](docs/CONTRIBUTING.md)
-- [Stockfish License & Attribution](docs/STOCKFISH_LICENSE.md)
-
----
-
-## Quality Gates & Verification
-
-- **TypeScript**: `npx tsc --noEmit` $\to$ 0 errors
-- **Automated Tests**: 12/12 passing unit & integration tests
-- **Cognitive Hygiene**: 500-line physical ceiling verified across all source files
-
----
-
-## License
-
-CheckmateAR is licensed under the [MIT License](LICENSE).  
-The integrated Stockfish engine is licensed under the [GNU General Public License v3.0](docs/STOCKFISH_LICENSE.md).
