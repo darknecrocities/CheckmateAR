@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
 import { useCameraPermissions } from 'expo-camera';
 import * as Haptics from 'expo-haptics';
-import { Camera, RotateCcw, Brain, Pause, Play, Scan, Lock, Unlock, Sparkles } from 'lucide-react-native';
+import { Camera, RotateCcw, Brain, Pause, Play, Scan, Lock, Unlock, Sparkles, ArrowLeft } from 'lucide-react-native';
 
 import { QuadPoints, Point2D } from '../../types/vision';
 import { SquareCoord, PieceColor, PieceType } from '../../types/chess';
@@ -32,11 +32,13 @@ function smoothPoint(prev: Point2D, target: Point2D, alpha: number): Point2D {
 interface ScanScreenProps {
   onNavigateToAnalysis: (fen: string, evaluation?: EngineEvaluation) => void;
   onNavigateToCoach: (fen: string, evaluation?: EngineEvaluation) => void;
+  onBackToHome?: () => void;
 }
 
 export const ScanScreen: React.FC<ScanScreenProps> = ({
   onNavigateToAnalysis,
   onNavigateToCoach,
+  onBackToHome,
 }) => {
   const [permission, requestPermission] = useCameraPermissions();
   const [isWhiteBottom, setIsWhiteBottom] = useState<boolean>(true);
@@ -224,6 +226,17 @@ export const ScanScreen: React.FC<ScanScreenProps> = ({
         }}
       />
 
+      {/* Top Left Return to Home Button */}
+      {onBackToHome && (
+        <TouchableOpacity
+          style={styles.backHomeBtn}
+          onPress={onBackToHome}
+          accessibilityLabel="Back to Home"
+        >
+          <ArrowLeft size={20} color="#FFFFFF" />
+        </TouchableOpacity>
+      )}
+
       {/* Top Floating HUD */}
       <ARTopHud
         depth={evaluation?.depth || 14}
@@ -348,6 +361,20 @@ const styles = StyleSheet.create({
     color: '#000000',
     fontSize: typography.caption.fontSize,
     fontWeight: '700',
+  },
+  backHomeBtn: {
+    position: 'absolute',
+    top: spacing.md,
+    left: spacing.md,
+    width: 44,
+    height: 44,
+    borderRadius: radii.pill,
+    backgroundColor: 'rgba(20, 20, 20, 0.85)',
+    borderWidth: 1.5,
+    borderColor: '#FFFFFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 25,
   },
   sideControls: {
     position: 'absolute',

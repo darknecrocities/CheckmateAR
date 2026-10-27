@@ -7,16 +7,18 @@ import { AnalysisScreen } from '../features/analysis/AnalysisScreen';
 import { CoachScreen } from '../features/coach/CoachScreen';
 import { HistoryScreen } from '../features/history/HistoryScreen';
 import { SettingsScreen } from '../features/settings/SettingsScreen';
+import { MascotScreen } from '../features/mascot/MascotScreen';
+import { FloatingPillNavbar, NavTab } from '../components/navigation/FloatingPillNavbar';
 import { EngineEvaluation } from '../types/stockfish';
 import { StudySession } from '../types/study';
 import { colors } from '../theme/colors';
 
-export type AppRoute = 'home' | 'scan' | 'analysis' | 'coach' | 'history' | 'settings';
+export type AppRoute = 'home' | 'scan' | 'analysis' | 'coach' | 'history' | 'settings' | 'mascot';
 
 export default function AppRoot() {
-  const [currentRoute, setCurrentRoute] = useState<AppRoute>('scan');
+  const [currentRoute, setCurrentRoute] = useState<AppRoute>('home');
   const [activeFen, setActiveFen] = useState<string>(
-    'rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1'
+    '5B2/6P1/1p6/8/1N6/kP6/2K5/8 w - - 0 1'
   );
   const [activeEval, setActiveEval] = useState<EngineEvaluation | undefined>(undefined);
 
@@ -32,14 +34,14 @@ export default function AppRoot() {
     }
   }, []);
 
-  const navigateToAnalysis = (fen: string, evaluation?: EngineEvaluation) => {
-    setActiveFen(fen);
+  const navigateToAnalysis = (fen?: string, evaluation?: EngineEvaluation) => {
+    if (fen) setActiveFen(fen);
     setActiveEval(evaluation);
     setCurrentRoute('analysis');
   };
 
-  const navigateToCoach = (fen: string, evaluation?: EngineEvaluation) => {
-    setActiveFen(fen);
+  const navigateToCoach = (fen?: string, evaluation?: EngineEvaluation) => {
+    if (fen) setActiveFen(fen);
     setActiveEval(evaluation);
     setCurrentRoute('coach');
   };
@@ -50,6 +52,25 @@ export default function AppRoot() {
     setCurrentRoute('analysis');
   };
 
+  const handleNavTabSelect = (tab: NavTab) => {
+    if (tab === 'home') setCurrentRoute('home');
+    else if (tab === 'mascot') setCurrentRoute('mascot');
+    else if (tab === 'coach') setCurrentRoute('coach');
+    else if (tab === 'settings') setCurrentRoute('settings');
+  };
+
+  // Determine active navbar tab
+  const activeNavTab: NavTab =
+    currentRoute === 'mascot'
+      ? 'mascot'
+      : currentRoute === 'coach'
+      ? 'coach'
+      : currentRoute === 'settings'
+      ? 'settings'
+      : 'home';
+
+  const showNavbar = currentRoute !== 'scan' && currentRoute !== 'analysis';
+
   return (
     <View style={styles.container}>
       <StatusBar hidden={true} barStyle="light-content" />
@@ -57,10 +78,17 @@ export default function AppRoot() {
       {currentRoute === 'home' && (
         <HomeScreen
           onStartScan={() => setCurrentRoute('scan')}
-          onOpenAnalysis={() => navigateToAnalysis(activeFen, activeEval)}
+          onOpenAnalysis={navigateToAnalysis}
+          onOpenCoach={navigateToCoach}
+          onOpenMascot={() => setCurrentRoute('mascot')}
           onOpenHistory={() => setCurrentRoute('history')}
-          onOpenSettings={() => setCurrentRoute('settings')}
-          onOpenSession={handleOpenSavedSession}
+        />
+      )}
+
+      {currentRoute === 'mascot' && (
+        <MascotScreen
+          onBack={() => setCurrentRoute('home')}
+          onStartAR={() => setCurrentRoute('scan')}
         />
       )}
 
@@ -68,6 +96,7 @@ export default function AppRoot() {
         <ScanScreen
           onNavigateToAnalysis={navigateToAnalysis}
           onNavigateToCoach={navigateToCoach}
+          onBackToHome={() => setCurrentRoute('home')}
         />
       )}
 
@@ -84,7 +113,7 @@ export default function AppRoot() {
         <CoachScreen
           fen={activeFen}
           evaluation={activeEval}
-          onBack={() => setCurrentRoute(activeEval ? 'scan' : 'home')}
+          onBack={() => setCurrentRoute('home')}
         />
       )}
 
@@ -98,6 +127,15 @@ export default function AppRoot() {
       {currentRoute === 'settings' && (
         <SettingsScreen onBack={() => setCurrentRoute('home')} />
       )}
+
+      {/* Signature Floating Pill Navbar (Matching Reference Screen 3) */}
+      {showNavbar && (
+        <FloatingPillNavbar
+          currentTab={activeNavTab}
+          onSelectTab={handleNavTabSelect}
+          onPressCenterAction={() => setCurrentRoute('scan')}
+        />
+      )}
     </View>
   );
 }
@@ -105,6 +143,6 @@ export default function AppRoot() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.dark.background,
+    backgroundColor: '#000000',
   },
 });
