@@ -1,20 +1,18 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
-import { CameraView, useCameraPermissions } from 'expo-camera';
+import { useCameraPermissions } from 'expo-camera';
 import * as Haptics from 'expo-haptics';
 import { Camera, RotateCcw, Brain, Pause, Play, Scan, Lock, Unlock, Sparkles } from 'lucide-react-native';
 
-import { QuadPoints, DetectedSquare, Point2D } from '../../types/vision';
+import { QuadPoints, Point2D } from '../../types/vision';
 import { SquareCoord, PieceColor, PieceType } from '../../types/chess';
 import { EngineEvaluation } from '../../types/stockfish';
 import { registerBoardFromCorners } from '../../services/vision/boardDetector';
 import { assembleFenFromSquares } from '../../services/vision/pieceClassifier';
-import { decodeBase64Jpeg } from '../../services/vision/pixelDecoder';
-import { detectBoardCornersFromPixels } from '../../services/vision/autoBoardDetector';
-import { classifyPiecesFromPixels } from '../../services/vision/pixelPieceClassifier';
 import { CameraMotionTracker } from '../../services/vision/motionTracker';
 import { StockfishEngine } from '../../services/stockfish/stockfishEngine';
 import { formatEvaluationScore } from '../../services/stockfish/uciProtocol';
+import { LiveStreamCamera, BoardStreamData } from '../../components/camera/LiveStreamCamera';
 import { ARPerspectiveBoard } from '../../components/ar/ARPerspectiveBoard';
 import { ARTopHud } from '../../components/ar/ARTopHud';
 import { ARCorrectionModal } from '../../components/ar/ARCorrectionModal';
@@ -23,6 +21,13 @@ import { spacing, radii } from '../../theme/spacing';
 import { typography } from '../../theme/typography';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+
+function smoothPoint(prev: Point2D, target: Point2D, alpha: number): Point2D {
+  return {
+    x: prev.x * (1 - alpha) + target.x * alpha,
+    y: prev.y * (1 - alpha) + target.y * alpha,
+  };
+}
 
 interface ScanScreenProps {
   onNavigateToAnalysis: (fen: string, evaluation?: EngineEvaluation) => void;
@@ -37,10 +42,9 @@ export const ScanScreen: React.FC<ScanScreenProps> = ({
   const [isWhiteBottom, setIsWhiteBottom] = useState<boolean>(true);
   const [isFrozen, setIsFrozen] = useState<boolean>(false);
   const [isLocked, setIsLocked] = useState<boolean>(false);
-  const [isScanning, setIsScanning] = useState<boolean>(false);
   const [selectedSquare, setSelectedSquare] = useState<SquareCoord | null>(null);
   const [correctionSquare, setCorrectionSquare] = useState<SquareCoord | null>(null);
-  const [statusMsg, setStatusMsg] = useState<string>('Live Camera Tracking Active');
+  const [statusMsg, setStatusMsg] = useState<string>('Live Stream Active • Tracking Board');
 
   const initialCorners: QuadPoints = {
     topLeft: { x: SCREEN_WIDTH * 0.10, y: SCREEN_HEIGHT * 0.30 },
@@ -51,18 +55,17 @@ export const ScanScreen: React.FC<ScanScreenProps> = ({
 
   const [corners, setCorners] = useState<QuadPoints>(initialCorners);
   const anchorCornersRef = useRef<QuadPoints>(initialCorners);
-  const hasSettledScannedRef = useRef<boolean>(false);
 
+  // Default to Kubbel 1907 puzzle position with immediate tactical line
   const [currentFen, setCurrentFen] = useState<string>(
-    'rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1'
+    '5B2/6P1/1p6/8/1N6/kP6/2K5/8 w - - 0 1'
   );
   const [evaluation, setEvaluation] = useState<EngineEvaluation | null>(null);
 
-  const cameraRef = useRef<any>(null);
   const engineRef = useRef<StockfishEngine>(new StockfishEngine({ depth: 14, multiPv: 3 }));
   const motionTrackerRef = useRef<CameraMotionTracker>(new CameraMotionTracker());
 
-  // Homography and squares derived from corners
+  // Homography and 64 squares derived from corners
   const { homography, squares } = React.useMemo(() => {
     return registerBoardFromCorners(corners, isWhiteBottom);
   }, [corners, isWhiteBottom]);
@@ -83,79 +86,38 @@ export const ScanScreen: React.FC<ScanScreenProps> = ({
     runAnalysis(currentFen);
   }, [currentFen, runAnalysis]);
 
-  // Continuous 60Hz Camera Motion Tracking with drift-free anchor clamping
+  // Continuous 60Hz Camera Motion Tracking
   useEffect(() => {
     motionTrackerRef.current.start((data) => {
-      if (!isFrozen) {
+      if (!isFrozen && !isLocked) {
         setCorners(CameraMotionTracker.applyOffsetToCorners(anchorCornersRef.current, data.offset));
-      }
-
-      // Motion-gated auto scan: triggers only when camera settles steadily
-      if (data.isStable && !isLocked && !isScanning && !hasSettledScannedRef.current) {
-        hasSettledScannedRef.current = true;
-        captureAndProcessFrame();
-      } else if (!data.isStable) {
-        hasSettledScannedRef.current = false;
       }
     });
 
     return () => {
       motionTrackerRef.current.stop();
     };
-  }, [isFrozen, isLocked, isScanning]);
+  }, [isFrozen, isLocked]);
 
-  // Process camera frame to detect board corners and pieces
-  const captureAndProcessFrame = useCallback(async () => {
-    if (!cameraRef.current || isFrozen || isScanning) return;
+  // Real-time video frame stream handler (zero shutter snaps)
+  const handleBoardStream = useCallback(
+    (streamData: BoardStreamData) => {
+      if (isLocked || isFrozen) return;
 
-    try {
-      setIsScanning(true);
-      const photo = await cameraRef.current.takePictureAsync({
-        quality: 0.35,
-        base64: true,
-      });
-
-      if (photo && photo.base64) {
-        const decoded = decodeBase64Jpeg(photo.base64);
-
-        // Auto-detect corners in real-time
-        const detectedCorners = detectBoardCornersFromPixels(decoded, {
-          screenWidth: SCREEN_WIDTH,
-          screenHeight: SCREEN_HEIGHT,
-          prevCorners: anchorCornersRef.current,
-          smoothingAlpha: 0.4,
-        });
-
-        anchorCornersRef.current = detectedCorners;
-        setCorners(detectedCorners);
-
-        // Classify pieces from actual pixels
-        const { homography: newH, squares: newSquares } = registerBoardFromCorners(
-          detectedCorners,
-          isWhiteBottom
-        );
-
-        const result = classifyPiecesFromPixels(
-          decoded,
-          newSquares,
-          newH,
-          SCREEN_WIDTH,
-          SCREEN_HEIGHT
-        );
-
-        if (result.isLegalFen && result.fen !== currentFen) {
-          setCurrentFen(result.fen);
-          runAnalysis(result.fen);
-          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-          setStatusMsg(`Position Detected: Stockfish Evaluated`);
-        }
+      if (streamData.isBoardFound) {
+        const smoothed: QuadPoints = {
+          topLeft: smoothPoint(anchorCornersRef.current.topLeft, streamData.corners.topLeft, 0.20),
+          topRight: smoothPoint(anchorCornersRef.current.topRight, streamData.corners.topRight, 0.20),
+          bottomRight: smoothPoint(anchorCornersRef.current.bottomRight, streamData.corners.bottomRight, 0.20),
+          bottomLeft: smoothPoint(anchorCornersRef.current.bottomLeft, streamData.corners.bottomLeft, 0.20),
+        };
+        anchorCornersRef.current = smoothed;
+        setCorners(smoothed);
+        setStatusMsg('Live Stream: Board Tracked');
       }
-    } catch (err: any) {
-      console.warn('captureAndProcessFrame error:', err?.message || err);
-    } finally {
-      setIsScanning(false);
-    }
-  }, [currentFen, isFrozen, isScanning, isWhiteBottom, runAnalysis]);
+    },
+    [isLocked, isFrozen]
+  );
 
   // Manual corner adjustment handler
   const handleCornerChange = (corner: keyof QuadPoints, newPoint: Point2D) => {
@@ -184,7 +146,7 @@ export const ScanScreen: React.FC<ScanScreenProps> = ({
 
   const handleSnapAutoAlign = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
-    setStatusMsg('Auto-aligning to board & scanning...');
+    setStatusMsg('Auto-aligned to board center');
     const centered: QuadPoints = {
       topLeft: { x: SCREEN_WIDTH * 0.10, y: SCREEN_HEIGHT * 0.30 },
       topRight: { x: SCREEN_WIDTH * 0.90, y: SCREEN_HEIGHT * 0.30 },
@@ -193,19 +155,13 @@ export const ScanScreen: React.FC<ScanScreenProps> = ({
     };
     anchorCornersRef.current = centered;
     setCorners(centered);
-    captureAndProcessFrame();
   };
 
   const toggleLock = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
     setIsLocked((prev) => {
       const next = !prev;
-      if (next) {
-        setStatusMsg('Board Locked • 60 FPS Tracking Active');
-        captureAndProcessFrame();
-      } else {
-        setStatusMsg('Live Camera Tracking Active');
-      }
+      setStatusMsg(next ? 'Board Locked • AR Reticle Fixed' : 'Live Stream Active • Tracking Board');
       return next;
     });
   };
@@ -228,16 +184,16 @@ export const ScanScreen: React.FC<ScanScreenProps> = ({
   const toggleFreeze = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setIsFrozen((prev) => !prev);
-    setStatusMsg(!isFrozen ? 'Frame frozen' : 'Live tracking resumed');
+    setStatusMsg(!isFrozen ? 'Stream paused' : 'Live stream resumed');
   };
 
   const evalText = evaluation ? formatEvaluationScore(evaluation.scoreCp, evaluation.mateIn) : '+0.00';
 
   return (
     <View style={styles.container}>
-      {/* Live Camera View with Fallback */}
+      {/* Live Stream Camera Pipeline (Zero Shutter Snaps) */}
       {permission?.granted ? (
-        <CameraView ref={cameraRef} style={StyleSheet.absoluteFill} facing="back" />
+        <LiveStreamCamera onBoardStream={handleBoardStream} style={StyleSheet.absoluteFill} />
       ) : (
         <View style={[StyleSheet.absoluteFill, styles.cameraPlaceholder]}>
           <Camera size={48} color={colors.dark.textMuted} />
@@ -248,7 +204,7 @@ export const ScanScreen: React.FC<ScanScreenProps> = ({
         </View>
       )}
 
-      {/* AR Perspective Board & SVG Overlays with 60 FPS Gyro Tracking */}
+      {/* AR 64-Tile Perspective Board, Pieces & Move Prediction */}
       <ARPerspectiveBoard
         corners={corners}
         homography={homography}
@@ -260,6 +216,7 @@ export const ScanScreen: React.FC<ScanScreenProps> = ({
         isWhiteBottom={isWhiteBottom}
         selectedSquare={selectedSquare}
         isLocked={isLocked}
+        fen={currentFen}
         onCornerChange={handleCornerChange}
         onSquarePress={(sq) => {
           setSelectedSquare(sq);
@@ -290,24 +247,24 @@ export const ScanScreen: React.FC<ScanScreenProps> = ({
 
         {/* Auto-Align Scan Button */}
         <TouchableOpacity
-          style={[styles.actionIconBtn, isScanning && styles.scanningBtn]}
+          style={styles.actionIconBtn}
           onPress={handleSnapAutoAlign}
-          accessibilityLabel="Auto-detect board"
+          accessibilityLabel="Auto-align board center"
         >
           <Scan size={20} color="#FFFFFF" />
         </TouchableOpacity>
 
-        {/* Quick Load SparkChess Puzzle */}
+        {/* Quick Load Kubbel Puzzle */}
         <TouchableOpacity
           style={styles.actionIconBtn}
           onPress={handleLoadKubbelPuzzle}
-          accessibilityLabel="Load SparkChess Kubbel Puzzle"
+          accessibilityLabel="Load Kubbel 1907 Puzzle"
         >
           <Sparkles size={20} color="#FFFFFF" />
         </TouchableOpacity>
 
-        {/* Freeze Frame Button */}
-        <TouchableOpacity style={styles.actionIconBtn} onPress={toggleFreeze} accessibilityLabel="Freeze frame">
+        {/* Pause/Play Stream Button */}
+        <TouchableOpacity style={styles.actionIconBtn} onPress={toggleFreeze} accessibilityLabel="Pause stream">
           {isFrozen ? <Play size={20} color="#FFFFFF" /> : <Pause size={20} color="#FFFFFF" />}
         </TouchableOpacity>
 
@@ -349,9 +306,17 @@ export const ScanScreen: React.FC<ScanScreenProps> = ({
       {/* Quick Square Correction Modal */}
       <ARCorrectionModal
         visible={correctionSquare !== null}
-        square={correctionSquare}
-        onClose={() => setCorrectionSquare(null)}
+        square={correctionSquare || 'e4'}
+        currentPiece={
+          correctionSquare && squares[correctionSquare]?.detectedPiece
+            ? {
+                type: squares[correctionSquare]!.detectedPiece!,
+                color: squares[correctionSquare]!.detectedColor || 'w',
+              }
+            : null
+        }
         onConfirmPiece={handleConfirmPiece}
+        onClose={() => setCorrectionSquare(null)}
       />
     </View>
   );
@@ -363,42 +328,41 @@ const styles = StyleSheet.create({
     backgroundColor: '#000000',
   },
   cameraPlaceholder: {
-    backgroundColor: '#111111',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: spacing.xl,
+    backgroundColor: '#0A0A0A',
+    gap: spacing.md,
   },
   permissionPromptText: {
-    ...typography.headline,
-    color: colors.dark.textPrimary,
-    marginTop: spacing.md,
-    marginBottom: spacing.lg,
+    color: '#FFFFFF',
+    fontSize: typography.body.fontSize,
+    fontWeight: '500',
   },
   permissionBtn: {
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
     backgroundColor: '#FFFFFF',
-    paddingHorizontal: spacing.xl,
-    paddingVertical: spacing.md,
-    borderRadius: radii.pill,
+    borderRadius: radii.md,
   },
   permissionBtnText: {
-    ...typography.headline,
     color: '#000000',
+    fontSize: typography.caption.fontSize,
     fontWeight: '700',
   },
   sideControls: {
     position: 'absolute',
-    right: spacing.lg,
-    top: 90,
-    gap: spacing.md,
-    zIndex: 90,
+    right: spacing.md,
+    top: SCREEN_HEIGHT * 0.11,
+    gap: spacing.sm,
+    zIndex: 20,
   },
   actionIconBtn: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: 'rgba(15, 15, 15, 0.9)',
+    width: 44,
+    height: 44,
+    borderRadius: radii.pill,
+    backgroundColor: 'rgba(20, 20, 20, 0.85)',
     borderWidth: 1.5,
-    borderColor: 'rgba(255, 255, 255, 0.25)',
+    borderColor: '#FFFFFF',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -406,26 +370,20 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderColor: '#FFFFFF',
   },
-  scanningBtn: {
-    borderColor: '#FFFFFF',
-    backgroundColor: 'rgba(255, 255, 255, 0.25)',
-  },
   bottomSafeArea: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
+    paddingHorizontal: spacing.md,
+    paddingBottom: spacing.lg,
   },
   bottomDrawer: {
     backgroundColor: 'rgba(10, 10, 10, 0.94)',
-    borderTopLeftRadius: radii.xl,
-    borderTopRightRadius: radii.xl,
+    borderRadius: radii.lg,
     borderWidth: 1,
-    borderBottomWidth: 0,
-    borderColor: 'rgba(255, 255, 255, 0.18)',
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.md,
-    paddingBottom: 28,
+    borderColor: '#262626',
+    padding: spacing.md,
   },
   drawerHeader: {
     flexDirection: 'row',
@@ -433,16 +391,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   drawerTitle: {
-    ...typography.headline,
-    color: colors.dark.textPrimary,
+    color: '#FFFFFF',
+    fontSize: typography.body.fontSize,
+    fontWeight: '600',
   },
   highlightMove: {
     color: '#FFFFFF',
     fontWeight: '800',
   },
   drawerSub: {
-    ...typography.caption,
-    color: colors.dark.textSecondary,
+    color: '#737373',
+    fontSize: typography.caption.fontSize,
     marginTop: 2,
   },
   drawerButtons: {
@@ -452,31 +411,30 @@ const styles = StyleSheet.create({
   coachBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 5,
-    backgroundColor: 'rgba(255, 255, 255, 0.12)',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
+    gap: spacing.xs,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
     borderRadius: radii.md,
+    borderWidth: 1,
+    borderColor: '#404040',
+    backgroundColor: 'rgba(38, 38, 38, 0.8)',
   },
   coachBtnText: {
-    ...typography.caption,
     color: '#FFFFFF',
-    fontWeight: '700',
+    fontSize: typography.caption.fontSize,
+    fontWeight: '600',
   },
   detailsBtn: {
-    backgroundColor: '#1E1E1E',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
     borderRadius: radii.md,
-    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#404040',
+    backgroundColor: 'rgba(26, 26, 26, 0.8)',
   },
   detailsBtnText: {
-    ...typography.caption,
-    color: colors.dark.textPrimary,
+    color: '#FFFFFF',
+    fontSize: typography.caption.fontSize,
     fontWeight: '600',
   },
 });

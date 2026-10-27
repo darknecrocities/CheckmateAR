@@ -1,0 +1,203 @@
+package com.darknecrocities.checkmatear
+
+import android.content.Context
+import android.util.AttributeSet
+import android.view.ViewGroup
+import android.widget.FrameLayout
+import androidx.camera.core.CameraSelector
+import androidx.camera.core.ImageAnalysis
+import androidx.camera.core.ImageProxy
+import androidx.camera.core.Preview
+import androidx.camera.core.resolutionselector.ResolutionSelector
+import androidx.camera.core.resolutionselector.ResolutionStrategy
+import androidx.camera.lifecycle.ProcessCameraProvider
+import androidx.camera.view.PreviewView
+import androidx.core.content.ContextCompat
+import androidx.lifecycle.LifecycleOwner
+import com.facebook.react.bridge.Arguments
+import com.facebook.react.bridge.ReactContext
+import com.facebook.react.bridge.WritableMap
+import com.facebook.react.modules.core.DeviceEventManagerModule
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
+import kotlin.math.abs
+
+/**
+ * High-performance CameraX stream view.
+ * Continuously analyzes live camera frames at 15-20 FPS using the direct Y-luminance buffer.
+ * Dispatches real-time board detection and corner updates without any photo captures.
+ */
+class LiveCameraView @JvmOverloads constructor(
+    context: Context,
+    attrs: AttributeSet? = null,
+    defStyleAttr: Int = 0
+) : FrameLayout(context, attrs, defStyleAttr) {
+
+    private val previewView: PreviewView = PreviewView(context)
+    private val analysisExecutor: ExecutorService = Executors.newSingleThreadExecutor()
+    private var lastAnalysisTimestamp: Long = 0L
+
+    init {
+        previewView.layoutParams = LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT,
+            ViewGroup.LayoutParams.MATCH_PARENT
+        )
+        previewView.scaleType = PreviewView.ScaleType.FILL_CENTER
+        addView(previewView)
+        startCamera()
+    }
+
+    private fun startCamera() {
+        val cameraProviderFuture = ProcessCameraProvider.getInstance(context)
+        cameraProviderFuture.addListener({
+            try {
+                val cameraProvider = cameraProviderFuture.get()
+                val lifecycleOwner = context as? LifecycleOwner ?: return@addListener
+
+                val preview = Preview.Builder().build().also {
+                    it.setSurfaceProvider(previewView.surfaceProvider)
+                }
+
+                val imageAnalysis = ImageAnalysis.Builder()
+                    .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+                    .build()
+
+                imageAnalysis.setAnalyzer(analysisExecutor) { imageProxy ->
+                    processFrame(imageProxy)
+                }
+
+                val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
+                cameraProvider.unbindAll()
+                cameraProvider.bindToLifecycle(
+                    lifecycleOwner,
+                    cameraSelector,
+                    preview,
+                    imageAnalysis
+                )
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }, ContextCompat.getMainExecutor(context))
+    }
+
+    private fun processFrame(imageProxy: ImageProxy) {
+        val now = System.currentTimeMillis()
+        // Throttle frame processing to ~15 FPS (66ms) to keep CPU cool and battery optimal
+        if (now - lastAnalysisTimestamp < 66) {
+            imageProxy.close()
+            return
+        }
+        lastAnalysisTimestamp = now
+
+        try {
+            val plane = imageProxy.planes[0]
+            val buffer = plane.buffer
+            val width = imageProxy.width
+            val height = imageProxy.height
+            val rowStride = plane.rowStride
+            val pixelStride = plane.pixelStride
+
+            // Analyze 32x32 luminance grid across frame
+            val grid = 32
+            val stepX = width / grid
+            val stepY = height / grid
+            val lum = Array(grid) { IntArray(grid) }
+
+            for (gy in 0 until grid) {
+                val py = gy * stepY
+                for (gx in 0 until grid) {
+                    val px = gx * stepX
+                    val index = py * rowStride + px * pixelStride
+                    if (index < buffer.remaining()) {
+                        lum[gy][gx] = buffer.get(index).toInt() and 0xFF
+                    }
+                }
+            }
+
+            // Detect alternating checkerboard transitions across rows and columns
+            val rowTrans = IntArray(grid)
+            val colTrans = IntArray(grid)
+
+            for (gy in 0 until grid) {
+                var t = 0
+                for (gx in 1 until grid) {
+                    if (abs(lum[gy][gx] - lum[gy][gx - 1]) > 25) t++
+                }
+                rowTrans[gy] = t
+            }
+
+            for (gx in 0 until grid) {
+                var t = 0
+                for (gy in 1 until grid) {
+                    if (abs(lum[gy][gx] - lum[gy - 1][gx]) > 25) t++
+                }
+                colTrans[gx] = t
+            }
+
+            // Find board bounding span (5 to 16 transitions)
+            var minGy = -1
+            var maxGy = -1
+            for (gy in 2 until grid - 2) {
+                if (rowTrans[gy] in 5..18) {
+                    if (minGy == -1) minGy = gy
+                    maxGy = gy
+                }
+            }
+
+            var minGx = -1
+            var maxGx = -1
+            for (gx in 2 until grid - 2) {
+                if (colTrans[gx] in 5..18) {
+                    if (minGx == -1) minGx = gx
+                    maxGx = gx
+                }
+            }
+
+            val isValid = minGy >= 0 && maxGy > minGy && minGx >= 0 && maxGx > minGx &&
+                    (maxGy - minGy) >= 6 && (maxGx - minGx) >= 6
+
+            val viewWidth = previewView.width.toFloat().coerceAtLeast(1f)
+            val viewHeight = previewView.height.toFloat().coerceAtLeast(1f)
+
+            val leftFrac = if (isValid) minGx.toFloat() / grid else 0.10f
+            val rightFrac = if (isValid) (maxGx + 1).toFloat() / grid else 0.90f
+            val topFrac = if (isValid) minGy.toFloat() / grid else 0.28f
+            val bottomFrac = if (isValid) (maxGy + 1).toFloat() / grid else 0.72f
+
+            val eventMap: WritableMap = Arguments.createMap()
+            eventMap.putBoolean("isBoardFound", isValid)
+            eventMap.putDouble("confidence", if (isValid) 0.92 else 0.50)
+
+            val cornersMap: WritableMap = Arguments.createMap()
+            cornersMap.putMap("topLeft", makePoint(leftFrac * viewWidth, topFrac * viewHeight))
+            cornersMap.putMap("topRight", makePoint(rightFrac * viewWidth, topFrac * viewHeight))
+            cornersMap.putMap("bottomRight", makePoint(rightFrac * viewWidth, bottomFrac * viewHeight))
+            cornersMap.putMap("bottomLeft", makePoint(leftFrac * viewWidth, bottomFrac * viewHeight))
+            eventMap.putMap("corners", cornersMap)
+
+            sendEvent("onBoardStream", eventMap)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        } finally {
+            imageProxy.close()
+        }
+    }
+
+    private fun makePoint(x: Float, y: Float): WritableMap {
+        val pt = Arguments.createMap()
+        pt.putDouble("x", x.toDouble())
+        pt.putDouble("y", y.toDouble())
+        return pt
+    }
+
+    private fun sendEvent(eventName: String, params: WritableMap) {
+        val reactContext = context as? ReactContext ?: return
+        reactContext.getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter::class.java)
+            ?.emit(eventName, params)
+    }
+
+    override fun onDetachedFromWindow() {
+        super.onDetachedFromWindow()
+        analysisExecutor.shutdown()
+    }
+}

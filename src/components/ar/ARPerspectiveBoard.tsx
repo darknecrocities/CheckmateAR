@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, StyleSheet, Dimensions, PanResponder } from 'react-native';
-import Svg, { Polygon, Line, G, Circle } from 'react-native-svg';
+import Svg, { Polygon, Line, G, Circle, Text as SvgText } from 'react-native-svg';
 import { QuadPoints, Matrix3x3, DetectedSquare, Point2D } from '../../types/vision';
 import { SquareCoord } from '../../types/chess';
 import { CandidateMove } from '../../types/stockfish';
@@ -20,12 +20,44 @@ interface ARPerspectiveBoardProps {
   selectedSquare?: SquareCoord | null;
   uncertainSquares?: SquareCoord[];
   isLocked?: boolean;
+  fen?: string;
   onSquarePress?: (coord: SquareCoord) => void;
   onCornerChange?: (corner: keyof QuadPoints, newPoint: Point2D) => void;
 }
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const HANDLE_RADIUS = 22;
+
+function parsePiecesFromFen(fen?: string): Record<SquareCoord, { type: string; color: 'w' | 'b' }> {
+  if (!fen) return {} as Record<SquareCoord, { type: string; color: 'w' | 'b' }>;
+  const placement = fen.split(' ')[0];
+  const rows = placement.split('/');
+  const result: Record<string, { type: string; color: 'w' | 'b' }> = {};
+
+  const files = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
+
+  for (let r = 0; r < 8 && r < rows.length; r++) {
+    const rank = 8 - r;
+    let fileIdx = 0;
+    const row = rows[r];
+
+    for (let c = 0; c < row.length; c++) {
+      const char = row[c];
+      if (char >= '1' && char <= '8') {
+        fileIdx += parseInt(char, 10);
+      } else if (fileIdx < 8) {
+        const file = files[fileIdx];
+        const isWhite = char === char.toUpperCase();
+        result[`${file}${rank}`] = {
+          type: char.toUpperCase(),
+          color: isWhite ? 'w' : 'b',
+        };
+        fileIdx++;
+      }
+    }
+  }
+  return result as Record<SquareCoord, { type: string; color: 'w' | 'b' }>;
+}
 
 export const ARPerspectiveBoard: React.FC<ARPerspectiveBoardProps> = ({
   corners,
@@ -39,6 +71,7 @@ export const ARPerspectiveBoard: React.FC<ARPerspectiveBoardProps> = ({
   selectedSquare,
   uncertainSquares = [],
   isLocked = false,
+  fen,
   onSquarePress,
   onCornerChange,
 }) => {
@@ -47,6 +80,8 @@ export const ARPerspectiveBoard: React.FC<ARPerspectiveBoardProps> = ({
   const fromSquare = (bestMove && bestMove.length >= 4 ? bestMove.slice(0, 2) : null) as SquareCoord | null;
   const toSquare = (bestMove && bestMove.length >= 4 ? bestMove.slice(2, 4) : null) as SquareCoord | null;
   const toSquareData = toSquare ? squares[toSquare] : null;
+
+  const parsedPieces = React.useMemo(() => parsePiecesFromFen(fen), [fen]);
 
   // PanResponder factory for draggable corner handles
   const createCornerPanResponder = (cornerKey: keyof QuadPoints) => {
@@ -67,10 +102,28 @@ export const ARPerspectiveBoard: React.FC<ARPerspectiveBoardProps> = ({
   const panBottomRight = React.useMemo(() => createCornerPanResponder('bottomRight'), [onCornerChange]);
   const panBottomLeft = React.useMemo(() => createCornerPanResponder('bottomLeft'), [onCornerChange]);
 
+  const fileLabels = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
+  const rankLabels = ['1', '2', '3', '4', '5', '6', '7', '8'];
+
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
       <Svg width={SCREEN_WIDTH} height={SCREEN_HEIGHT} style={StyleSheet.absoluteFill}>
-        {/* Outer Board Dark Contrast Contour */}
+        {/* Full 64 Perspective AR Chessboard Tiles */}
+        {Object.values(squares).map((sq) => {
+          const polyStr = sq.screenPolygon.map((p) => `${p.x},${p.y}`).join(' ');
+          const isLight = (sq.fileIndex + sq.rankIndex) % 2 === 0;
+          return (
+            <Polygon
+              key={`tile_${sq.coord}`}
+              points={polyStr}
+              fill={isLight ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.22)'}
+              stroke="rgba(255, 255, 255, 0.24)"
+              strokeWidth={0.8}
+            />
+          );
+        })}
+
+        {/* Outer Board Frame */}
         <Polygon
           points={borderPoints}
           stroke="#000000"
@@ -78,8 +131,6 @@ export const ARPerspectiveBoard: React.FC<ARPerspectiveBoardProps> = ({
           strokeOpacity={0.7}
           fill="none"
         />
-
-        {/* Outer Board Stark White Frame */}
         <Polygon
           points={borderPoints}
           stroke="#FFFFFF"
@@ -101,18 +152,55 @@ export const ARPerspectiveBoard: React.FC<ARPerspectiveBoardProps> = ({
           <Line x1={corners.bottomLeft.x} y1={corners.bottomLeft.y} x2={corners.bottomLeft.x} y2={corners.bottomLeft.y - 28} />
         </G>
 
-        {/* Source Square Highlight */}
+        {/* File and Rank Labels in Perspective */}
+        {fileLabels.map((f) => {
+          const sq = squares[`${f}1` as SquareCoord];
+          if (!sq) return null;
+          return (
+            <SvgText
+              key={`file_${f}`}
+              x={sq.screenCenter.x}
+              y={sq.screenPolygon[2].y + 11}
+              fill="#FFFFFF"
+              fontSize={9}
+              fontWeight="700"
+              textAnchor="middle"
+            >
+              {f}
+            </SvgText>
+          );
+        })}
+
+        {rankLabels.map((r) => {
+          const sq = squares[`a${r}` as SquareCoord];
+          if (!sq) return null;
+          return (
+            <SvgText
+              key={`rank_${r}`}
+              x={sq.screenPolygon[0].x - 8}
+              y={sq.screenCenter.y + 3}
+              fill="#FFFFFF"
+              fontSize={9}
+              fontWeight="700"
+              textAnchor="end"
+            >
+              {r}
+            </SvgText>
+          );
+        })}
+
+        {/* Source Square Tactical Highlight */}
         {fromSquare && squares[fromSquare] && (
           <Polygon
             points={squares[fromSquare].screenPolygon.map((p) => `${p.x},${p.y}`).join(' ')}
             stroke={colors.ar.bestMoveTile}
-            strokeWidth={2}
+            strokeWidth={2.5}
             fill={colors.ar.bestMoveTile}
-            fillOpacity={0.35}
+            fillOpacity={0.4}
           />
         )}
 
-        {/* Destination Square Highlight */}
+        {/* Destination Square Tactical Highlight */}
         {toSquare && squares[toSquare] && (
           <Polygon
             points={squares[toSquare].screenPolygon.map((p) => `${p.x},${p.y}`).join(' ')}
@@ -123,7 +211,7 @@ export const ARPerspectiveBoard: React.FC<ARPerspectiveBoardProps> = ({
           />
         )}
 
-        {/* Selected Square */}
+        {/* Selected Square Highlight */}
         {selectedSquare && squares[selectedSquare] && (
           <Polygon
             points={squares[selectedSquare].screenPolygon.map((p) => `${p.x},${p.y}`).join(' ')}
@@ -149,6 +237,36 @@ export const ARPerspectiveBoard: React.FC<ARPerspectiveBoardProps> = ({
               fill={colors.ar.uncertainTile}
               fillOpacity={0.25}
             />
+          );
+        })}
+
+        {/* Recognized Piece Indicators on Tiles */}
+        {Object.entries(parsedPieces).map(([coord, piece]) => {
+          const sq = squares[coord as SquareCoord];
+          if (!sq) return null;
+          const isWhite = piece.color === 'w';
+          const isFrom = coord === fromSquare;
+          return (
+            <G key={`piece_${coord}`}>
+              <Circle
+                cx={sq.screenCenter.x}
+                cy={sq.screenCenter.y}
+                r={isFrom ? 12 : 10}
+                fill={isWhite ? '#FFFFFF' : '#141414'}
+                stroke={isWhite ? '#000000' : '#FFFFFF'}
+                strokeWidth={isFrom ? 2 : 1.2}
+              />
+              <SvgText
+                x={sq.screenCenter.x}
+                y={sq.screenCenter.y + 3.5}
+                textAnchor="middle"
+                fontSize={10}
+                fontWeight="800"
+                fill={isWhite ? '#000000' : '#FFFFFF'}
+              >
+                {piece.type}
+              </SvgText>
+            </G>
           );
         })}
 
