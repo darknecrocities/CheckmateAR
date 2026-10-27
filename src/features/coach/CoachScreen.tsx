@@ -146,7 +146,7 @@ export const CoachScreen: React.FC<CoachScreenProps> = ({
           >
             {m.motif && (
               <View style={styles.motifBadge}>
-                <Sparkles size={12} color="#00E676" />
+                <Sparkles size={12} color="#FFFFFF" />
                 <Text style={styles.motifText}>{m.motif}</Text>
               </View>
             )}
@@ -227,14 +227,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   offlineTag: {
-    backgroundColor: 'rgba(0, 230, 118, 0.15)',
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: radii.sm,
   },
   offlineTagText: {
     ...typography.tiny,
-    color: '#00E676',
+    color: '#FFFFFF',
     fontWeight: '700',
   },
   levelTabs: {
@@ -293,14 +293,14 @@ const styles = StyleSheet.create({
     color: colors.dark.textPrimary,
   },
   userBubbleText: {
-    color: '#052312',
+    color: '#000000',
     fontWeight: '600',
   },
   motifBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: 'rgba(0, 230, 118, 0.15)',
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: radii.sm,
@@ -309,7 +309,7 @@ const styles = StyleSheet.create({
   },
   motifText: {
     ...typography.tiny,
-    color: '#00E676',
+    color: '#FFFFFF',
     fontWeight: '700',
   },
   planCard: {

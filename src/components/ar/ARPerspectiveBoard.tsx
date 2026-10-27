@@ -19,6 +19,7 @@ interface ARPerspectiveBoardProps {
   isWhiteBottom?: boolean;
   selectedSquare?: SquareCoord | null;
   uncertainSquares?: SquareCoord[];
+  isLocked?: boolean;
   onSquarePress?: (coord: SquareCoord) => void;
   onCornerChange?: (corner: keyof QuadPoints, newPoint: Point2D) => void;
 }
@@ -37,6 +38,7 @@ export const ARPerspectiveBoard: React.FC<ARPerspectiveBoardProps> = ({
   isWhiteBottom = true,
   selectedSquare,
   uncertainSquares = [],
+  isLocked = false,
   onSquarePress,
   onCornerChange,
 }) => {
@@ -68,25 +70,35 @@ export const ARPerspectiveBoard: React.FC<ARPerspectiveBoardProps> = ({
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
       <Svg width={SCREEN_WIDTH} height={SCREEN_HEIGHT} style={StyleSheet.absoluteFill}>
-        {/* Outer Board Neon Frame */}
+        {/* Outer Board Dark Contrast Contour */}
         <Polygon
           points={borderPoints}
-          stroke={colors.ar.boardBorder}
-          strokeWidth={2.5}
-          strokeOpacity={0.85}
+          stroke="#000000"
+          strokeWidth={isLocked ? 5.5 : 4}
+          strokeOpacity={0.7}
+          fill="none"
+        />
+
+        {/* Outer Board Stark White Frame */}
+        <Polygon
+          points={borderPoints}
+          stroke="#FFFFFF"
+          strokeWidth={isLocked ? 3 : 2}
+          strokeDasharray={isLocked ? undefined : '8 6'}
+          strokeOpacity={isLocked ? 1.0 : 0.85}
           fill="none"
         />
 
         {/* Outer Corner Reticle Brackets */}
-        <G stroke={colors.ar.cornerBracket} strokeWidth={4} strokeLinecap="round">
-          <Line x1={corners.topLeft.x} y1={corners.topLeft.y} x2={corners.topLeft.x + 24} y2={corners.topLeft.y} />
-          <Line x1={corners.topLeft.x} y1={corners.topLeft.y} x2={corners.topLeft.x} y2={corners.topLeft.y + 24} />
-          <Line x1={corners.topRight.x} y1={corners.topRight.y} x2={corners.topRight.x - 24} y2={corners.topRight.y} />
-          <Line x1={corners.topRight.x} y1={corners.topRight.y} x2={corners.topRight.x} y2={corners.topRight.y + 24} />
-          <Line x1={corners.bottomRight.x} y1={corners.bottomRight.y} x2={corners.bottomRight.x - 24} y2={corners.bottomRight.y} />
-          <Line x1={corners.bottomRight.x} y1={corners.bottomRight.y} x2={corners.bottomRight.x} y2={corners.bottomRight.y - 24} />
-          <Line x1={corners.bottomLeft.x} y1={corners.bottomLeft.y} x2={corners.bottomLeft.x + 24} y2={corners.bottomLeft.y} />
-          <Line x1={corners.bottomLeft.x} y1={corners.bottomLeft.y} x2={corners.bottomLeft.x} y2={corners.bottomLeft.y - 24} />
+        <G stroke="#FFFFFF" strokeWidth={isLocked ? 4.5 : 3.5} strokeLinecap="round">
+          <Line x1={corners.topLeft.x} y1={corners.topLeft.y} x2={corners.topLeft.x + 28} y2={corners.topLeft.y} />
+          <Line x1={corners.topLeft.x} y1={corners.topLeft.y} x2={corners.topLeft.x} y2={corners.topLeft.y + 28} />
+          <Line x1={corners.topRight.x} y1={corners.topRight.y} x2={corners.topRight.x - 28} y2={corners.topRight.y} />
+          <Line x1={corners.topRight.x} y1={corners.topRight.y} x2={corners.topRight.x} y2={corners.topRight.y + 28} />
+          <Line x1={corners.bottomRight.x} y1={corners.bottomRight.y} x2={corners.bottomRight.x - 28} y2={corners.bottomRight.y} />
+          <Line x1={corners.bottomRight.x} y1={corners.bottomRight.y} x2={corners.bottomRight.x} y2={corners.bottomRight.y - 28} />
+          <Line x1={corners.bottomLeft.x} y1={corners.bottomLeft.y} x2={corners.bottomLeft.x + 28} y2={corners.bottomLeft.y} />
+          <Line x1={corners.bottomLeft.x} y1={corners.bottomLeft.y} x2={corners.bottomLeft.x} y2={corners.bottomLeft.y - 28} />
         </G>
 
         {/* Source Square Highlight */}
@@ -115,10 +127,11 @@ export const ARPerspectiveBoard: React.FC<ARPerspectiveBoardProps> = ({
         {selectedSquare && squares[selectedSquare] && (
           <Polygon
             points={squares[selectedSquare].screenPolygon.map((p) => `${p.x},${p.y}`).join(' ')}
-            stroke="#00E5FF"
-            strokeWidth={2.5}
-            fill="#00E5FF"
-            fillOpacity={0.4}
+            stroke="#FFFFFF"
+            strokeWidth={2}
+            strokeDasharray="4 4"
+            fill="#FFFFFF"
+            fillOpacity={0.25}
           />
         )}
 
@@ -203,9 +216,9 @@ const styles = StyleSheet.create({
     width: HANDLE_RADIUS * 2,
     height: HANDLE_RADIUS * 2,
     borderRadius: HANDLE_RADIUS,
-    backgroundColor: 'rgba(0, 229, 255, 0.25)',
+    backgroundColor: 'rgba(255, 255, 255, 0.25)',
     borderWidth: 2,
-    borderColor: '#00E5FF',
+    borderColor: '#FFFFFF',
     justifyContent: 'center',
     alignItems: 'center',
   },

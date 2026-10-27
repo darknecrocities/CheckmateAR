@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
-import { View, StyleSheet, StatusBar } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, StyleSheet, StatusBar, Platform } from 'react-native';
+import * as NavigationBar from 'expo-navigation-bar';
 import { HomeScreen } from '../features/home/HomeScreen';
 import { ScanScreen } from '../features/scan/ScanScreen';
 import { AnalysisScreen } from '../features/analysis/AnalysisScreen';
@@ -18,6 +19,18 @@ export default function AppRoot() {
     'rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1'
   );
   const [activeEval, setActiveEval] = useState<EngineEvaluation | undefined>(undefined);
+
+  useEffect(() => {
+    // Hide mobile status bar and navigation bar globally for full immersion
+    StatusBar.setHidden(true, 'none');
+    if (Platform.OS === 'android') {
+      try {
+        NavigationBar.setVisibilityAsync('hidden');
+      } catch {
+        // Fallback for non-supported device runtimes
+      }
+    }
+  }, []);
 
   const navigateToAnalysis = (fen: string, evaluation?: EngineEvaluation) => {
     setActiveFen(fen);
@@ -39,7 +52,7 @@ export default function AppRoot() {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" />
+      <StatusBar hidden={true} barStyle="light-content" />
 
       {currentRoute === 'home' && (
         <HomeScreen

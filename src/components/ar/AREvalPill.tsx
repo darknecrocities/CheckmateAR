@@ -14,8 +14,8 @@ export const AREvalPill: React.FC<AREvalPillProps> = ({
   position,
   san,
   evalText,
-  color = '#00E676',
-  textColor = '#052312',
+  color = '#FFFFFF',
+  textColor = '#000000',
 }) => {
   const displayText = `${san} ${evalText}`.trim();
   // Pill dimensions based on text length
@@ -26,18 +26,18 @@ export const AREvalPill: React.FC<AREvalPillProps> = ({
 
   return (
     <G>
-      {/* Outer ambient glow */}
+      {/* Outer ambient drop contour */}
       <Rect
-        x={x - 2}
-        y={y - 2}
-        width={width + 4}
-        height={height + 4}
-        rx={17}
-        ry={17}
-        fill={color}
-        opacity={0.35}
+        x={x - 1.5}
+        y={y - 1.5}
+        width={width + 3}
+        height={height + 3}
+        rx={16}
+        ry={16}
+        fill="#000000"
+        opacity={0.7}
       />
-      {/* Main Pill Surface */}
+      {/* Main Pill Surface - High Contrast Monochrome */}
       <Rect
         x={x}
         y={y}
@@ -46,9 +46,9 @@ export const AREvalPill: React.FC<AREvalPillProps> = ({
         rx={15}
         ry={15}
         fill={color}
-        stroke="#FFFFFF"
-        strokeWidth={1.5}
-        opacity={0.96}
+        stroke="#111111"
+        strokeWidth={1}
+        opacity={0.98}
       />
       {/* Pill Text */}
       <Text
@@ -56,7 +56,7 @@ export const AREvalPill: React.FC<AREvalPillProps> = ({
         y={y + 19}
         textAnchor="middle"
         fill={textColor}
-        fontSize={14}
+        fontSize={13}
         fontWeight="bold"
       >
         {displayText}

@@ -74,7 +74,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
       <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}>
         {/* Offline Ready Guarantee Badge */}
         <View style={styles.offlineBanner}>
-          <ShieldCheck size={16} color="#00E676" />
+          <ShieldCheck size={16} color="#FFFFFF" />
           <Text style={styles.offlineBannerText}>
             100% Offline • Local Stockfish & Computer Vision
           </Text>
@@ -85,7 +85,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           <View style={styles.heroGlow} />
           <View style={styles.heroContent}>
             <View style={styles.heroIconWrap}>
-              <Camera size={32} color="#052312" />
+              <Camera size={30} color="#000000" />
             </View>
             <View style={styles.heroTextWrap}>
               <Text style={styles.heroTitle}>Scan Physical Board</Text>
@@ -99,7 +99,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         {/* Secondary Action: Virtual Board & Analysis */}
         <TouchableOpacity style={styles.secondaryCard} activeOpacity={0.85} onPress={onOpenAnalysis}>
           <View style={styles.secondaryIconWrap}>
-            <Play size={20} color="#00E5FF" />
+            <Play size={20} color="#FFFFFF" />
           </View>
           <View style={styles.secondaryTextWrap}>
             <Text style={styles.secondaryTitle}>Virtual Board & Analysis</Text>
@@ -211,9 +211,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
-    backgroundColor: 'rgba(0, 230, 118, 0.1)',
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
     borderWidth: 1,
-    borderColor: 'rgba(0, 230, 118, 0.25)',
+    borderColor: 'rgba(255, 255, 255, 0.2)',
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
     borderRadius: radii.pill,
@@ -221,12 +221,12 @@ const styles = StyleSheet.create({
   },
   offlineBannerText: {
     ...typography.tiny,
-    color: '#00E676',
+    color: '#FFFFFF',
     fontWeight: '700',
   },
   heroCard: {
     position: 'relative',
-    backgroundColor: colors.dark.accent,
+    backgroundColor: '#FFFFFF',
     borderRadius: radii.xl,
     padding: spacing.xl,
     overflow: 'hidden',
@@ -238,7 +238,7 @@ const styles = StyleSheet.create({
     width: 120,
     height: 120,
     borderRadius: 60,
-    backgroundColor: 'rgba(255, 255, 255, 0.25)',
+    backgroundColor: 'rgba(0, 0, 0, 0.05)',
   },
   heroContent: {
     flexDirection: 'row',
@@ -249,7 +249,7 @@ const styles = StyleSheet.create({
     width: 58,
     height: 58,
     borderRadius: 29,
-    backgroundColor: 'rgba(255, 255, 255, 0.35)',
+    backgroundColor: 'rgba(0, 0, 0, 0.08)',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -258,12 +258,12 @@ const styles = StyleSheet.create({
   },
   heroTitle: {
     ...typography.title1,
-    color: '#052312',
+    color: '#000000',
     fontWeight: '800',
   },
   heroSubtitle: {
     ...typography.caption,
-    color: '#09361C',
+    color: '#3F3F46',
     marginTop: 4,
     lineHeight: 18,
   },
@@ -281,7 +281,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: 'rgba(0, 229, 255, 0.12)',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
     justifyContent: 'center',
     alignItems: 'center',
   },

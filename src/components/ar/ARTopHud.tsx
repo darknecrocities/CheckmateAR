@@ -10,6 +10,7 @@ interface ARTopHudProps {
   isCheckmate?: boolean;
   statusMessage?: string;
   isOfflineReady?: boolean;
+  isLocked?: boolean;
 }
 
 export const ARTopHud: React.FC<ARTopHudProps> = ({
@@ -18,6 +19,7 @@ export const ARTopHud: React.FC<ARTopHudProps> = ({
   isCheckmate = false,
   statusMessage = 'Physical Board Calibrated',
   isOfflineReady = true,
+  isLocked = false,
 }) => {
   return (
     <View style={styles.container}>
@@ -25,12 +27,18 @@ export const ARTopHud: React.FC<ARTopHudProps> = ({
       <View style={styles.topRow}>
         {/* Brand / Mode Pill */}
         <View style={styles.pillLeft}>
-          <View style={styles.activeDot} />
+          <View style={[styles.activeDot, isLocked && styles.lockedDot]} />
           <Text style={styles.brandText}>CheckmateAR</Text>
-          {isOfflineReady && (
-            <View style={styles.offlineBadge}>
-              <Text style={styles.offlineText}>OFFLINE</Text>
+          {isLocked ? (
+            <View style={styles.lockedBadge}>
+              <Text style={styles.lockedText}>LOCKED</Text>
             </View>
+          ) : (
+            isOfflineReady && (
+              <View style={styles.offlineBadge}>
+                <Text style={styles.offlineText}>OFFLINE</Text>
+              </View>
+            )
           )}
         </View>
 
@@ -57,7 +65,7 @@ export const ARTopHud: React.FC<ARTopHudProps> = ({
 const styles = StyleSheet.create({
   container: {
     position: 'absolute',
-    top: 54,
+    top: 24,
     left: spacing.lg,
     right: spacing.lg,
     zIndex: 100,
@@ -81,25 +89,42 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: colors.ar.bestMoveTile,
+    backgroundColor: '#A1A1AA',
     marginRight: spacing.sm,
+  },
+  lockedDot: {
+    backgroundColor: '#FFFFFF',
   },
   brandText: {
     ...typography.headline,
     color: colors.dark.textPrimary,
     fontSize: 13,
   },
+  lockedBadge: {
+    marginLeft: spacing.sm,
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+    borderRadius: 4,
+  },
+  lockedText: {
+    ...typography.tiny,
+    color: '#000000',
+    fontSize: 9,
+    fontWeight: '800',
+  },
   offlineBadge: {
     marginLeft: spacing.sm,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    paddingHorizontal: 5,
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    paddingHorizontal: 6,
     paddingVertical: 1,
     borderRadius: 4,
   },
   offlineText: {
     ...typography.tiny,
     color: colors.dark.textSecondary,
-    fontSize: 8,
+    fontSize: 9,
+    fontWeight: '700',
   },
   pillRight: {
     backgroundColor: colors.ar.hudBackground,
@@ -110,12 +135,12 @@ const styles = StyleSheet.create({
     borderRadius: radii.pill,
   },
   checkmatePill: {
-    borderColor: colors.dark.danger,
-    backgroundColor: 'rgba(255, 23, 68, 0.25)',
+    borderColor: '#FFFFFF',
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
   },
   evalText: {
     ...typography.caption,
-    color: colors.ar.bestMoveTile,
+    color: '#FFFFFF',
     fontWeight: '700',
   },
   statusContainer: {

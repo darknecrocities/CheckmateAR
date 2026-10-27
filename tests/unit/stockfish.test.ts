@@ -45,10 +45,25 @@ describe('Stockfish Engine & Chess Rules Validator', () => {
     const fen = 'rnbqkbnr/pppp1ppp/8/4p3/6P1/5P2/PPPPP2P/RNBQKBNR b KQkq - 0 2';
     const evalResult = await engine.analyzePosition(fen);
 
+    console.log('SPARKCHESS PUZZLE BEST MOVE:', evalResult.bestMove, evalResult.bestMoveSan, 'SCORE:', evalResult.scoreCp);
+
     expect(evalResult.bestMove).toBeDefined();
     expect(evalResult.candidates.length).toBeGreaterThan(0);
     // Black's best move in this position is Qh4#
     expect(evalResult.bestMove).toBe('d8h4');
     expect(evalResult.bestMoveSan).toBe('Qh4#');
+  });
+
+  it('accurately evaluates endgame puzzle positions like SparkChess King+Knight+Bishop', async () => {
+    const engine = new StockfishEngine({ depth: 8, multiPv: 3 });
+    // SparkChess puzzle: White K at c2, N at b4, P at b3, B at f6, P at g5. Black K at a4, P at b6.
+    const fen = '8/8/1p3B2/6P1/kN6/1P6/2K5/8 w - - 0 1';
+    const evalResult = await engine.analyzePosition(fen);
+
+    console.log('SPARKCHESS PUZZLE BEST MOVE:', evalResult.bestMove, evalResult.bestMoveSan, 'SCORE:', evalResult.scoreCp);
+
+    expect(evalResult.bestMove).toBeDefined();
+    expect(evalResult.bestMoveSan).toBeDefined();
+    expect(evalResult.scoreCp).toBeGreaterThan(0); // White has decisive winning advantage
   });
 });

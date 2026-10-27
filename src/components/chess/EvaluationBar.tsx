@@ -64,7 +64,7 @@ const styles = StyleSheet.create({
   evalText: {
     ...typography.monoEval,
     fontSize: 13,
-    color: '#00E676',
+    color: '#FFFFFF',
     minWidth: 46,
     textAlign: 'right',
   },

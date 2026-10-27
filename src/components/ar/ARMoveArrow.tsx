@@ -34,7 +34,7 @@ export const ARMoveArrow: React.FC<ARMoveArrowProps> = ({
   fromCoord,
   toCoord,
   homography,
-  color = '#00E676',
+  color = '#FFFFFF',
   isCandidate = false,
   isWhiteBottom = true,
 }) => {
@@ -89,21 +89,21 @@ export const ARMoveArrow: React.FC<ARMoveArrowProps> = ({
     headPoints = `${pTo.x},${pTo.y} ${x1},${y1} ${x2},${y2}`;
   }
 
-  const strokeWidth = isCandidate ? 3.5 : 6;
-  const strokeOpacity = isCandidate ? 0.75 : 0.95;
+  const strokeWidth = isCandidate ? 3 : 5.5;
+  const strokeOpacity = isCandidate ? 0.75 : 1.0;
 
   return (
     <G>
-      {/* Subtle outer glow layer */}
+      {/* High-contrast black underlay contour */}
       <Path
         d={pathD}
-        stroke={color}
-        strokeWidth={strokeWidth + 4}
-        strokeOpacity={0.3}
+        stroke="#000000"
+        strokeWidth={strokeWidth + 3.5}
+        strokeOpacity={0.85}
         strokeLinecap="round"
         fill="none"
       />
-      {/* Main core arrow line */}
+      {/* Main Stark White Arrow Body */}
       <Path
         d={pathD}
         stroke={color}
@@ -112,7 +112,15 @@ export const ARMoveArrow: React.FC<ARMoveArrowProps> = ({
         strokeLinecap="round"
         fill="none"
       />
-      {/* Arrow head polygon */}
+      {/* Arrow Head Contour */}
+      <Polygon
+        points={headPoints}
+        fill="#000000"
+        stroke="#000000"
+        strokeWidth={2}
+        opacity={0.85}
+      />
+      {/* Main Stark White Arrow Head */}
       <Polygon points={headPoints} fill={color} opacity={strokeOpacity} />
     </G>
   );

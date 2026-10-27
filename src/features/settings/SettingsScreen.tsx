@@ -69,7 +69,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onBack }) => {
         <View style={styles.card}>
           <View style={styles.row}>
             <View style={styles.rowLabelWrap}>
-              <Cpu size={20} color="#00E676" />
+              <Cpu size={20} color="#FFFFFF" />
               <View>
                 <Text style={styles.rowTitle}>Search Depth</Text>
                 <Text style={styles.rowSubtitle}>Higher depth calculates deeper tactics</Text>
@@ -118,7 +118,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onBack }) => {
         <View style={styles.card}>
           <View style={styles.row}>
             <View style={styles.rowLabelWrap}>
-              <ShieldCheck size={20} color="#00E5FF" />
+              <ShieldCheck size={20} color="#FFFFFF" />
               <View>
                 <Text style={styles.rowTitle}>100% On-Device Privacy</Text>
                 <Text style={styles.rowSubtitle}>Zero camera frames or board data leave this device</Text>
@@ -217,14 +217,14 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   depthPill: {
-    backgroundColor: 'rgba(0, 230, 118, 0.15)',
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
     paddingHorizontal: spacing.md,
     paddingVertical: 4,
     borderRadius: radii.pill,
   },
   depthText: {
     ...typography.tiny,
-    color: '#00E676',
+    color: '#FFFFFF',
     fontWeight: '700',
   },
   buttonGroup: {

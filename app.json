@@ -16,6 +16,13 @@
       "package": "com.darknecrocities.checkmatear",
       "permissions": ["android.permission.CAMERA"]
     },
+    "androidStatusBar": {
+      "hidden": true
+    },
+    "androidNavigationBar": {
+      "visible": "sticky-immersive",
+      "barStyle": "dark"
+    },
     "plugins": [
       [
         "expo-camera",

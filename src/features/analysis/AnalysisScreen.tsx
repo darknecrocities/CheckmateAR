@@ -111,7 +111,7 @@ export const AnalysisScreen: React.FC<AnalysisScreenProps> = ({
         <Text style={styles.headerTitle}>Deep Analysis</Text>
         <View style={styles.headerActions}>
           <TouchableOpacity style={styles.iconBtn} onPress={handleSaveSession}>
-            <Bookmark size={20} color={isSaved ? '#00E676' : colors.dark.textPrimary} />
+            <Bookmark size={20} color={isSaved ? '#FFFFFF' : colors.dark.textSecondary} />
           </TouchableOpacity>
           <TouchableOpacity style={styles.iconBtn} onPress={handleReset}>
             <RotateCcw size={20} color={colors.dark.textPrimary} />
@@ -139,7 +139,7 @@ export const AnalysisScreen: React.FC<AnalysisScreenProps> = ({
           onPress={() => onNavigateToCoach(fen, evaluation || undefined)}
         >
           <View style={styles.coachIconWrap}>
-            <Brain size={22} color="#00E676" />
+            <Brain size={22} color="#FFFFFF" />
           </View>
           <View style={styles.coachTextWrap}>
             <Text style={styles.coachTitle}>Ask Grounded Coach</Text>
