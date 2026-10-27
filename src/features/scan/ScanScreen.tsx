@@ -5,8 +5,6 @@ import {
   StyleSheet,
   TouchableOpacity,
   Dimensions,
-  SafeAreaView,
-  Alert,
 } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as Haptics from 'expo-haptics';
@@ -15,18 +13,21 @@ import {
   RefreshCw,
   RotateCcw,
   Sliders,
-  ChevronUp,
   Brain,
   Pause,
   Play,
+  Scan,
 } from 'lucide-react-native';
 
-import { QuadPoints, DetectedSquare } from '../../types/vision';
+import { QuadPoints, DetectedSquare, Point2D } from '../../types/vision';
 import { SquareCoord, PieceColor, PieceType } from '../../types/chess';
 import { EngineEvaluation } from '../../types/stockfish';
 import { registerBoardFromCorners } from '../../services/vision/boardDetector';
 import { assembleFenFromSquares } from '../../services/vision/pieceClassifier';
-import { MoveDifferenceTracker } from '../../services/vision/moveDifferenceTracker';
+import { decodeBase64Jpeg } from '../../services/vision/pixelDecoder';
+import { detectBoardCornersFromPixels } from '../../services/vision/autoBoardDetector';
+import { classifyPiecesFromPixels } from '../../services/vision/pixelPieceClassifier';
+import { CameraMotionTracker } from '../../services/vision/motionTracker';
 import { StockfishEngine } from '../../services/stockfish/stockfishEngine';
 import { formatEvaluationScore } from '../../services/stockfish/uciProtocol';
 import { ARPerspectiveBoard } from '../../components/ar/ARPerspectiveBoard';
@@ -50,11 +51,11 @@ export const ScanScreen: React.FC<ScanScreenProps> = ({
   const [permission, requestPermission] = useCameraPermissions();
   const [isWhiteBottom, setIsWhiteBottom] = useState<boolean>(true);
   const [isFrozen, setIsFrozen] = useState<boolean>(false);
+  const [isScanning, setIsScanning] = useState<boolean>(false);
   const [selectedSquare, setSelectedSquare] = useState<SquareCoord | null>(null);
   const [correctionSquare, setCorrectionSquare] = useState<SquareCoord | null>(null);
-  const [statusMsg, setStatusMsg] = useState<string>('Align chessboard within camera frame');
+  const [statusMsg, setStatusMsg] = useState<string>('Live Camera Tracking Active');
 
-  // Realistic default perspective board corners for phone camera held at a 45-degree angle
   const [corners, setCorners] = useState<QuadPoints>({
     topLeft: { x: SCREEN_WIDTH * 0.12, y: SCREEN_HEIGHT * 0.22 },
     topRight: { x: SCREEN_WIDTH * 0.88, y: SCREEN_HEIGHT * 0.22 },
@@ -67,18 +68,19 @@ export const ScanScreen: React.FC<ScanScreenProps> = ({
   );
   const [evaluation, setEvaluation] = useState<EngineEvaluation | null>(null);
 
+  const cameraRef = useRef<any>(null);
   const engineRef = useRef<StockfishEngine>(new StockfishEngine({ depth: 14, multiPv: 3 }));
-  const moveTrackerRef = useRef<MoveDifferenceTracker>(new MoveDifferenceTracker());
+  const motionTrackerRef = useRef<CameraMotionTracker>(new CameraMotionTracker());
 
-  // Derive board squares & homography from current corners
+  // Homography and squares derived from corners
   const { homography, squares } = React.useMemo(() => {
     return registerBoardFromCorners(corners, isWhiteBottom);
   }, [corners, isWhiteBottom]);
 
-  // Run engine analysis whenever FEN changes
+  // Run Stockfish engine on FEN
   const runAnalysis = useCallback(async (fen: string) => {
     try {
-      setStatusMsg('Stockfish analyzing position...');
+      setStatusMsg('Analyzing position with Stockfish...');
       const result = await engineRef.current.analyzePosition(fen);
       setEvaluation(result);
       setStatusMsg(`Best: ${result.bestMoveSan} (${formatEvaluationScore(result.scoreCp, result.mateIn)})`);
@@ -91,7 +93,87 @@ export const ScanScreen: React.FC<ScanScreenProps> = ({
     runAnalysis(currentFen);
   }, [currentFen, runAnalysis]);
 
-  // Handle manual correction confirmation
+  // Start 60 FPS Camera Motion Tracker
+  useEffect(() => {
+    motionTrackerRef.current.start((offset) => {
+      if (!isFrozen) {
+        setCorners((prev) => CameraMotionTracker.applyOffsetToCorners(prev, offset));
+      }
+    });
+
+    return () => {
+      motionTrackerRef.current.stop();
+    };
+  }, [isFrozen]);
+
+  // Process camera frame to auto-detect board corners and pieces
+  const captureAndProcessFrame = useCallback(async () => {
+    if (!cameraRef.current || isFrozen || isScanning) return;
+
+    try {
+      setIsScanning(true);
+      const photo = await cameraRef.current.takePictureAsync({
+        quality: 0.25,
+        base64: true,
+        skipProcessing: true,
+      });
+
+      if (photo && photo.base64) {
+        const decoded = decodeBase64Jpeg(photo.base64);
+
+        // Auto-detect corners in real-time
+        const detectedCorners = detectBoardCornersFromPixels(decoded, {
+          screenWidth: SCREEN_WIDTH,
+          screenHeight: SCREEN_HEIGHT,
+          prevCorners: corners,
+          smoothingAlpha: 0.45,
+        });
+        setCorners(detectedCorners);
+
+        // Classify pieces from actual pixels
+        const { homography: newH, squares: newSquares } = registerBoardFromCorners(
+          detectedCorners,
+          isWhiteBottom
+        );
+
+        const result = classifyPiecesFromPixels(
+          decoded,
+          newSquares,
+          newH,
+          SCREEN_WIDTH,
+          SCREEN_HEIGHT
+        );
+
+        if (result.isLegalFen && result.fen !== currentFen) {
+          setCurrentFen(result.fen);
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          setStatusMsg(`Position Updated (${result.confidence * 100}% confidence)`);
+        }
+      }
+    } catch {
+      // Keep existing calibration if frame was busy
+    } finally {
+      setIsScanning(false);
+    }
+  }, [corners, currentFen, isFrozen, isScanning, isWhiteBottom]);
+
+  // Periodic visual scan loop every 2 seconds
+  useEffect(() => {
+    const timer = setInterval(() => {
+      captureAndProcessFrame();
+    }, 2000);
+
+    return () => clearInterval(timer);
+  }, [captureAndProcessFrame]);
+
+  // Manual corner adjustment handler
+  const handleCornerChange = (corner: keyof QuadPoints, newPoint: Point2D) => {
+    setCorners((prev) => ({
+      ...prev,
+      [corner]: newPoint,
+    }));
+  };
+
   const handleConfirmPiece = (
     square: SquareCoord,
     piece: { type: PieceType; color: PieceColor } | null
@@ -108,16 +190,10 @@ export const ScanScreen: React.FC<ScanScreenProps> = ({
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
   };
 
-  const handleRecalibrate = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    // Reset corners to standard perspective box
-    setCorners({
-      topLeft: { x: SCREEN_WIDTH * 0.12, y: SCREEN_HEIGHT * 0.22 },
-      topRight: { x: SCREEN_WIDTH * 0.88, y: SCREEN_HEIGHT * 0.22 },
-      bottomRight: { x: SCREEN_WIDTH * 0.96, y: SCREEN_HEIGHT * 0.68 },
-      bottomLeft: { x: SCREEN_WIDTH * 0.04, y: SCREEN_HEIGHT * 0.68 },
-    });
-    setStatusMsg('Board recalibrated to camera viewport');
+  const handleSnapAutoAlign = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+    setStatusMsg('Auto-detecting chessboard in camera view...');
+    captureAndProcessFrame();
   };
 
   const toggleOrientation = () => {
@@ -129,16 +205,16 @@ export const ScanScreen: React.FC<ScanScreenProps> = ({
   const toggleFreeze = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setIsFrozen((prev) => !prev);
-    setStatusMsg(!isFrozen ? 'Analysis frame frozen' : 'Live scanning resumed');
+    setStatusMsg(!isFrozen ? 'Frame frozen' : 'Live tracking resumed');
   };
 
   const evalText = evaluation ? formatEvaluationScore(evaluation.scoreCp, evaluation.mateIn) : '+0.00';
 
   return (
     <View style={styles.container}>
-      {/* Live Camera View with Fallback background */}
+      {/* Live Camera View with Fallback */}
       {permission?.granted ? (
-        <CameraView style={StyleSheet.absoluteFill} facing="back" />
+        <CameraView ref={cameraRef} style={StyleSheet.absoluteFill} facing="back" />
       ) : (
         <View style={[StyleSheet.absoluteFill, styles.cameraPlaceholder]}>
           <Camera size={48} color={colors.dark.textMuted} />
@@ -149,7 +225,7 @@ export const ScanScreen: React.FC<ScanScreenProps> = ({
         </View>
       )}
 
-      {/* AR Perspective Board & SVG Overlays */}
+      {/* AR Perspective Board & SVG Overlays with 60 FPS Gyro Tracking */}
       <ARPerspectiveBoard
         corners={corners}
         homography={homography}
@@ -160,6 +236,7 @@ export const ScanScreen: React.FC<ScanScreenProps> = ({
         evalText={evalText}
         isWhiteBottom={isWhiteBottom}
         selectedSquare={selectedSquare}
+        onCornerChange={handleCornerChange}
         onSquarePress={(sq) => {
           setSelectedSquare(sq);
           setCorrectionSquare(sq);
@@ -175,26 +252,30 @@ export const ScanScreen: React.FC<ScanScreenProps> = ({
         isOfflineReady={true}
       />
 
-      {/* Floating Side Action Controls */}
+      {/* Side Controls */}
       <View style={styles.sideControls}>
+        <TouchableOpacity
+          style={[styles.actionIconBtn, isScanning && styles.scanningBtn]}
+          onPress={handleSnapAutoAlign}
+          accessibilityLabel="Auto-detect board"
+        >
+          <Scan size={22} color="#00E5FF" />
+        </TouchableOpacity>
         <TouchableOpacity style={styles.actionIconBtn} onPress={toggleFreeze} accessibilityLabel="Freeze frame">
           {isFrozen ? <Play size={20} color="#00E676" /> : <Pause size={20} color="#FFFFFF" />}
         </TouchableOpacity>
         <TouchableOpacity style={styles.actionIconBtn} onPress={toggleOrientation} accessibilityLabel="Flip board">
           <RotateCcw size={20} color="#FFFFFF" />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.actionIconBtn} onPress={handleRecalibrate} accessibilityLabel="Recalibrate">
-          <RefreshCw size={20} color="#00E5FF" />
-        </TouchableOpacity>
       </View>
 
       {/* Bottom Analysis Drawer Bar */}
-      <SafeAreaView style={styles.bottomSafeArea}>
+      <View style={styles.bottomSafeArea}>
         <View style={styles.bottomDrawer}>
           <View style={styles.drawerHeader}>
             <View>
               <Text style={styles.drawerTitle}>
-                Best Move: <Text style={styles.highlightMove}>{evaluation?.bestMoveSan || 'Searching...'}</Text>
+                Best Move: <Text style={styles.highlightMove}>{evaluation?.bestMoveSan || 'Calculating...'}</Text>
               </Text>
               <Text style={styles.drawerSub}>Depth {evaluation?.depth || 14} • Score {evalText}</Text>
             </View>
@@ -215,7 +296,7 @@ export const ScanScreen: React.FC<ScanScreenProps> = ({
             </View>
           </View>
         </View>
-      </SafeAreaView>
+      </View>
 
       {/* Quick Square Correction Modal */}
       <ARCorrectionModal
@@ -264,14 +345,18 @@ const styles = StyleSheet.create({
     zIndex: 90,
   },
   actionIconBtn: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: 'rgba(19, 20, 28, 0.85)',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.15)',
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: 'rgba(19, 20, 28, 0.88)',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  scanningBtn: {
+    borderColor: '#00E5FF',
+    backgroundColor: 'rgba(0, 229, 255, 0.2)',
   },
   bottomSafeArea: {
     position: 'absolute',
@@ -288,7 +373,7 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(0, 229, 255, 0.25)',
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.md,
-    paddingBottom: spacing.lg,
+    paddingBottom: 28,
   },
   drawerHeader: {
     flexDirection: 'row',

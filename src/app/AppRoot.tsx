@@ -13,7 +13,7 @@ import { colors } from '../theme/colors';
 export type AppRoute = 'home' | 'scan' | 'analysis' | 'coach' | 'history' | 'settings';
 
 export default function AppRoot() {
-  const [currentRoute, setCurrentRoute] = useState<AppRoute>('home');
+  const [currentRoute, setCurrentRoute] = useState<AppRoute>('scan');
   const [activeFen, setActiveFen] = useState<string>(
     'rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1'
   );
