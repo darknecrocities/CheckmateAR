@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet, ViewStyle } from 'react-native';
+import { StyleSheet, ViewStyle } from 'react-native';
 import Svg, {
   Path,
   Circle,
@@ -8,27 +8,33 @@ import Svg, {
   RadialGradient,
   Stop,
   G,
-  Rect,
 } from 'react-native-svg';
 import { PieceType } from '../../types/chess';
+import { ContinuousFloatView } from '../ui/MotionPrimitives';
 
 interface ChessPieceArtworkProps {
   piece: PieceType;
   size?: number;
   color?: 'white' | 'black' | 'silver';
   showFadeTexture?: boolean;
+  animated?: boolean;
+  floatDelay?: number;
+  isCardPressed?: boolean;
   style?: ViewStyle;
 }
 
 /**
- * High-fidelity 3D-shaded vector chess piece artwork with transparent background.
- * Optimized for card overlays, corner peeks, and radial fade textures.
+ * High-fidelity 3D-shaded vector chess piece artwork with transparent background,
+ * continuous liquid levitation, and counter-parallax 3D lift on card press.
  */
 export const ChessPieceArtwork: React.FC<ChessPieceArtworkProps> = ({
   piece,
   size = 90,
   color = 'white',
   showFadeTexture = true,
+  animated = true,
+  floatDelay = 0,
+  isCardPressed,
   style,
 }) => {
   const isDark = color === 'black';
@@ -42,7 +48,12 @@ export const ChessPieceArtwork: React.FC<ChessPieceArtworkProps> = ({
   const strokeColor = isDark ? '#525252' : '#FFFFFF';
 
   return (
-    <View style={[styles.container, { width: size, height: size }, style]} pointerEvents="none">
+    <ContinuousFloatView
+      enabled={animated}
+      delay={floatDelay}
+      elevated={isCardPressed}
+      style={[styles.container, { width: size, height: size }, style]}
+    >
       <Svg width={size} height={size} viewBox="0 0 100 100">
         <Defs>
           {/* 3D Directional Lighting Gradient */}
@@ -148,7 +159,7 @@ export const ChessPieceArtwork: React.FC<ChessPieceArtworkProps> = ({
           fill="none"
         />
       </Svg>
-    </View>
+    </ContinuousFloatView>
   );
 };
 
