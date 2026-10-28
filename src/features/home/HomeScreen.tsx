@@ -16,6 +16,7 @@ import { HomeStartTab } from './components/HomeStartTab';
 import { HomeStrategyTab } from './components/HomeStrategyTab';
 import { KineticMascotCompanion } from '../../components/mascot/KineticMascotCompanion';
 import { KineticPressable } from '../../components/ui/MotionPrimitives';
+import { StrategyItem } from '../../services/chess/strategyLibrary';
 import { motion } from '../../theme/motion';
 import { spacing, radii } from '../../theme/spacing';
 
@@ -29,6 +30,7 @@ interface HomeScreenProps {
   onOpenCoach: (fen?: string) => void;
   onOpenMascot: () => void;
   onOpenHistory: () => void;
+  onOpenTrainer?: (strategy?: StrategyItem) => void;
 }
 
 export const HomeScreen: React.FC<HomeScreenProps> = ({
@@ -36,6 +38,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   onOpenAnalysis,
   onOpenCoach,
   onOpenMascot,
+  onOpenHistory,
+  onOpenTrainer,
 }) => {
   const [activeTab, setActiveTab] = useState<'start' | 'strategy'>('start');
   const slideX = useRef(new Animated.Value(0)).current;
@@ -122,9 +126,14 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             onOpenAnalysis={() => onOpenAnalysis()}
             onOpenMascot={onOpenMascot}
             onOpenCoach={() => onOpenCoach()}
+            onOpenTrainer={() => onOpenTrainer?.()}
+            onOpenHistory={onOpenHistory}
           />
         ) : (
-          <HomeStrategyTab onAnalyzePosition={(fen) => onOpenAnalysis(fen)} />
+          <HomeStrategyTab
+            onAnalyzePosition={(fen) => onOpenAnalysis(fen)}
+            onPracticeStrategy={(strat) => onOpenTrainer?.(strat)}
+          />
         )}
       </ScrollView>
     </SafeAreaView>

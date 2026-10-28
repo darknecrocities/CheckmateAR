@@ -8,13 +8,23 @@ import { CoachScreen } from '../features/coach/CoachScreen';
 import { HistoryScreen } from '../features/history/HistoryScreen';
 import { SettingsScreen } from '../features/settings/SettingsScreen';
 import { MascotScreen } from '../features/mascot/MascotScreen';
+import { TacticalTrainerScreen } from '../features/trainer/TacticalTrainerScreen';
 import { FloatingPillNavbar, NavTab } from '../components/navigation/FloatingPillNavbar';
 import { KineticRouteTransition } from '../components/ui/MotionPrimitives';
+import { StrategyItem } from '../services/chess/strategyLibrary';
 import { EngineEvaluation } from '../types/stockfish';
 import { StudySession } from '../types/study';
 import { colors } from '../theme/colors';
 
-export type AppRoute = 'home' | 'scan' | 'analysis' | 'coach' | 'history' | 'settings' | 'mascot';
+export type AppRoute =
+  | 'home'
+  | 'scan'
+  | 'analysis'
+  | 'coach'
+  | 'history'
+  | 'settings'
+  | 'mascot'
+  | 'trainer';
 
 export default function AppRoot() {
   const [currentRoute, setCurrentRoute] = useState<AppRoute>('home');
@@ -22,6 +32,7 @@ export default function AppRoot() {
     '5B2/6P1/1p6/8/1N6/kP6/2K5/8 w - - 0 1'
   );
   const [activeEval, setActiveEval] = useState<EngineEvaluation | undefined>(undefined);
+  const [activeStrategy, setActiveStrategy] = useState<StrategyItem | undefined>(undefined);
 
   useEffect(() => {
     // Hide mobile status bar and navigation bar globally for full immersion
@@ -45,6 +56,11 @@ export default function AppRoot() {
     if (fen) setActiveFen(fen);
     setActiveEval(evaluation);
     setCurrentRoute('coach');
+  };
+
+  const navigateToTrainer = (strategy?: StrategyItem) => {
+    setActiveStrategy(strategy);
+    setCurrentRoute('trainer');
   };
 
   const handleOpenSavedSession = (session: StudySession) => {
@@ -84,6 +100,15 @@ export default function AppRoot() {
             onOpenCoach={navigateToCoach}
             onOpenMascot={() => setCurrentRoute('mascot')}
             onOpenHistory={() => setCurrentRoute('history')}
+            onOpenTrainer={navigateToTrainer}
+          />
+        )}
+
+        {currentRoute === 'trainer' && (
+          <TacticalTrainerScreen
+            initialStrategy={activeStrategy}
+            onBack={() => setCurrentRoute('home')}
+            onOpenEngine={(fen) => navigateToAnalysis(fen)}
           />
         )}
 
