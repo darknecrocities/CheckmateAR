@@ -28,6 +28,7 @@ export const HomeStartTab: React.FC<HomeStartTabProps> = ({
       <LiquidGlassCard
         variant="featured"
         causticPosition="right"
+        staggerIndex={0}
         style={styles.featuredCard}
         onPress={onStartScan}
       >
@@ -45,9 +46,9 @@ export const HomeStartTab: React.FC<HomeStartTabProps> = ({
           </View>
         </View>
 
-        {/* Offset 3D Knight Artwork with Fade Texture */}
+        {/* Offset 3D Knight Artwork with Fade Texture & Counter-Parallax */}
         <View style={styles.offsetPieceWrap}>
-          <ChessPieceArtwork piece="n" size={135} color="white" />
+          <ChessPieceArtwork piece="n" size={135} color="white" floatDelay={0} />
         </View>
       </LiquidGlassCard>
 
@@ -58,13 +59,14 @@ export const HomeStartTab: React.FC<HomeStartTabProps> = ({
         <LiquidGlassCard
           variant="cube"
           causticPosition="corner"
+          staggerIndex={1}
           style={styles.cubeCard}
           onPress={onStartScan}
         >
           <Text style={styles.cubeDate}>CameraX Stream</Text>
           <Text style={styles.cubeTitle}>AR Vision</Text>
           <View style={styles.cubeOffsetPiece}>
-            <ChessPieceArtwork piece="b" size={82} color="white" />
+            <ChessPieceArtwork piece="b" size={82} color="white" floatDelay={180} />
           </View>
         </LiquidGlassCard>
 
@@ -72,13 +74,14 @@ export const HomeStartTab: React.FC<HomeStartTabProps> = ({
         <LiquidGlassCard
           variant="cube"
           causticPosition="corner"
+          staggerIndex={2}
           style={styles.cubeCard}
           onPress={onOpenAnalysis}
         >
           <Text style={styles.cubeDate}>Depth 14 Multi-PV</Text>
           <Text style={styles.cubeTitle}>Engine Spar</Text>
           <View style={styles.cubeOffsetPiece}>
-            <ChessPieceArtwork piece="q" size={82} color="white" />
+            <ChessPieceArtwork piece="q" size={82} color="white" floatDelay={360} />
           </View>
         </LiquidGlassCard>
 
@@ -86,13 +89,14 @@ export const HomeStartTab: React.FC<HomeStartTabProps> = ({
         <LiquidGlassCard
           variant="cube"
           causticPosition="corner"
+          staggerIndex={3}
           style={styles.cubeCard}
           onPress={onOpenMascot}
         >
           <Text style={styles.cubeDate}>CAD Blueprint</Text>
           <Text style={styles.cubeTitle}>3D Mascot</Text>
           <View style={styles.cubeOffsetPiece}>
-            <ChessPieceArtwork piece="n" size={82} color="white" />
+            <ChessPieceArtwork piece="n" size={82} color="white" floatDelay={540} />
           </View>
         </LiquidGlassCard>
 
@@ -100,19 +104,25 @@ export const HomeStartTab: React.FC<HomeStartTabProps> = ({
         <LiquidGlassCard
           variant="cube"
           causticPosition="corner"
+          staggerIndex={4}
           style={styles.cubeCard}
           onPress={onOpenCoach}
         >
           <Text style={styles.cubeDate}>Grounded Mentor</Text>
           <Text style={styles.cubeTitle}>AI Coach</Text>
           <View style={styles.cubeOffsetPiece}>
-            <ChessPieceArtwork piece="k" size={82} color="white" />
+            <ChessPieceArtwork piece="k" size={82} color="white" floatDelay={720} />
           </View>
         </LiquidGlassCard>
       </View>
 
       {/* Offline Guarantee Footer Banner */}
-      <LiquidGlassCard variant="default" causticPosition="none" style={styles.offlineCard}>
+      <LiquidGlassCard
+        variant="default"
+        causticPosition="none"
+        staggerIndex={5}
+        style={styles.offlineCard}
+      >
         <ShieldCheck size={18} color="#FFFFFF" />
         <View style={styles.offlineTextWrap}>
           <Text style={styles.offlineTitle}>100% On-Device Offline Privacy</Text>

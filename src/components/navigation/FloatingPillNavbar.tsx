@@ -1,11 +1,9 @@
 import React from 'react';
-import { View, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import * as Haptics from 'expo-haptics';
-import { BookOpen, Box, Camera, Brain, User, Plus } from 'lucide-react-native';
-import { colors } from '../../theme/colors';
+import { BookOpen, Box, Camera, Brain, User } from 'lucide-react-native';
+import { KineticPressable } from '../ui/MotionPrimitives';
 import { radii, spacing } from '../../theme/spacing';
-
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 export type NavTab = 'home' | 'mascot' | 'coach' | 'settings';
 
@@ -21,12 +19,12 @@ export const FloatingPillNavbar: React.FC<FloatingPillNavbarProps> = ({
   onPressCenterAction,
 }) => {
   const handleTabPress = (tab: NavTab) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
     onSelectTab(tab);
   };
 
   const handleCenterPress = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy).catch(() => {});
     onPressCenterAction();
   };
 
@@ -35,7 +33,10 @@ export const FloatingPillNavbar: React.FC<FloatingPillNavbarProps> = ({
       <View style={styles.navbarRow}>
         {/* Left Pill Pod: Home & 3D Mascot */}
         <View style={styles.pillPod}>
-          <TouchableOpacity
+          <KineticPressable
+            scaleTo={0.86}
+            translateYTo={-2}
+            hapticStyle="selection"
             style={[styles.podBtn, currentTab === 'home' && styles.activePodBtn]}
             onPress={() => handleTabPress('home')}
             accessibilityLabel="Home Library"
@@ -45,9 +46,12 @@ export const FloatingPillNavbar: React.FC<FloatingPillNavbarProps> = ({
               color={currentTab === 'home' ? '#FFFFFF' : '#737373'}
               strokeWidth={currentTab === 'home' ? 2.4 : 1.8}
             />
-          </TouchableOpacity>
+          </KineticPressable>
 
-          <TouchableOpacity
+          <KineticPressable
+            scaleTo={0.86}
+            translateYTo={-2}
+            hapticStyle="selection"
             style={[styles.podBtn, currentTab === 'mascot' && styles.activePodBtn]}
             onPress={() => handleTabPress('mascot')}
             accessibilityLabel="3D Mascot Studio"
@@ -57,22 +61,28 @@ export const FloatingPillNavbar: React.FC<FloatingPillNavbarProps> = ({
               color={currentTab === 'mascot' ? '#FFFFFF' : '#737373'}
               strokeWidth={currentTab === 'mascot' ? 2.4 : 1.8}
             />
-          </TouchableOpacity>
+          </KineticPressable>
         </View>
 
-        {/* Center Elevated Action Button (Matching Reference Screen 3) */}
-        <TouchableOpacity
+        {/* Center Elevated Action Button with Continuous Kinetic Breathing Pulse */}
+        <KineticPressable
+          scaleTo={0.88}
+          translateYTo={-3}
+          enablePulse
+          hapticStyle="medium"
           style={styles.centerCircleBtn}
-          activeOpacity={0.88}
           onPress={handleCenterPress}
           accessibilityLabel="Launch Live AR Scanner"
         >
           <Camera size={24} color="#000000" strokeWidth={2.4} />
-        </TouchableOpacity>
+        </KineticPressable>
 
         {/* Right Pill Pod: AI Coach & Settings */}
         <View style={styles.pillPod}>
-          <TouchableOpacity
+          <KineticPressable
+            scaleTo={0.86}
+            translateYTo={-2}
+            hapticStyle="selection"
             style={[styles.podBtn, currentTab === 'coach' && styles.activePodBtn]}
             onPress={() => handleTabPress('coach')}
             accessibilityLabel="AI Coach"
@@ -82,9 +92,12 @@ export const FloatingPillNavbar: React.FC<FloatingPillNavbarProps> = ({
               color={currentTab === 'coach' ? '#FFFFFF' : '#737373'}
               strokeWidth={currentTab === 'coach' ? 2.4 : 1.8}
             />
-          </TouchableOpacity>
+          </KineticPressable>
 
-          <TouchableOpacity
+          <KineticPressable
+            scaleTo={0.86}
+            translateYTo={-2}
+            hapticStyle="selection"
             style={[styles.podBtn, currentTab === 'settings' && styles.activePodBtn]}
             onPress={() => handleTabPress('settings')}
             accessibilityLabel="Settings"
@@ -94,7 +107,7 @@ export const FloatingPillNavbar: React.FC<FloatingPillNavbarProps> = ({
               color={currentTab === 'settings' ? '#FFFFFF' : '#737373'}
               strokeWidth={currentTab === 'settings' ? 2.4 : 1.8}
             />
-          </TouchableOpacity>
+          </KineticPressable>
         </View>
       </View>
     </View>

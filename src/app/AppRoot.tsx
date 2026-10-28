@@ -9,6 +9,7 @@ import { HistoryScreen } from '../features/history/HistoryScreen';
 import { SettingsScreen } from '../features/settings/SettingsScreen';
 import { MascotScreen } from '../features/mascot/MascotScreen';
 import { FloatingPillNavbar, NavTab } from '../components/navigation/FloatingPillNavbar';
+import { KineticRouteTransition } from '../components/ui/MotionPrimitives';
 import { EngineEvaluation } from '../types/stockfish';
 import { StudySession } from '../types/study';
 import { colors } from '../theme/colors';
@@ -75,58 +76,60 @@ export default function AppRoot() {
     <View style={styles.container}>
       <StatusBar hidden={true} barStyle="light-content" />
 
-      {currentRoute === 'home' && (
-        <HomeScreen
-          onStartScan={() => setCurrentRoute('scan')}
-          onOpenAnalysis={navigateToAnalysis}
-          onOpenCoach={navigateToCoach}
-          onOpenMascot={() => setCurrentRoute('mascot')}
-          onOpenHistory={() => setCurrentRoute('history')}
-        />
-      )}
+      <KineticRouteTransition routeKey={currentRoute}>
+        {currentRoute === 'home' && (
+          <HomeScreen
+            onStartScan={() => setCurrentRoute('scan')}
+            onOpenAnalysis={navigateToAnalysis}
+            onOpenCoach={navigateToCoach}
+            onOpenMascot={() => setCurrentRoute('mascot')}
+            onOpenHistory={() => setCurrentRoute('history')}
+          />
+        )}
 
-      {currentRoute === 'mascot' && (
-        <MascotScreen
-          onBack={() => setCurrentRoute('home')}
-          onStartAR={() => setCurrentRoute('scan')}
-        />
-      )}
+        {currentRoute === 'mascot' && (
+          <MascotScreen
+            onBack={() => setCurrentRoute('home')}
+            onStartAR={() => setCurrentRoute('scan')}
+          />
+        )}
 
-      {currentRoute === 'scan' && (
-        <ScanScreen
-          onNavigateToAnalysis={navigateToAnalysis}
-          onNavigateToCoach={navigateToCoach}
-          onBackToHome={() => setCurrentRoute('home')}
-        />
-      )}
+        {currentRoute === 'scan' && (
+          <ScanScreen
+            onNavigateToAnalysis={navigateToAnalysis}
+            onNavigateToCoach={navigateToCoach}
+            onBackToHome={() => setCurrentRoute('home')}
+          />
+        )}
 
-      {currentRoute === 'analysis' && (
-        <AnalysisScreen
-          initialFen={activeFen}
-          initialEvaluation={activeEval}
-          onBack={() => setCurrentRoute('home')}
-          onNavigateToCoach={navigateToCoach}
-        />
-      )}
+        {currentRoute === 'analysis' && (
+          <AnalysisScreen
+            initialFen={activeFen}
+            initialEvaluation={activeEval}
+            onBack={() => setCurrentRoute('home')}
+            onNavigateToCoach={navigateToCoach}
+          />
+        )}
 
-      {currentRoute === 'coach' && (
-        <CoachScreen
-          fen={activeFen}
-          evaluation={activeEval}
-          onBack={() => setCurrentRoute('home')}
-        />
-      )}
+        {currentRoute === 'coach' && (
+          <CoachScreen
+            fen={activeFen}
+            evaluation={activeEval}
+            onBack={() => setCurrentRoute('home')}
+          />
+        )}
 
-      {currentRoute === 'history' && (
-        <HistoryScreen
-          onBack={() => setCurrentRoute('home')}
-          onOpenSession={handleOpenSavedSession}
-        />
-      )}
+        {currentRoute === 'history' && (
+          <HistoryScreen
+            onBack={() => setCurrentRoute('home')}
+            onOpenSession={handleOpenSavedSession}
+          />
+        )}
 
-      {currentRoute === 'settings' && (
-        <SettingsScreen onBack={() => setCurrentRoute('home')} />
-      )}
+        {currentRoute === 'settings' && (
+          <SettingsScreen onBack={() => setCurrentRoute('home')} />
+        )}
+      </KineticRouteTransition>
 
       {/* Signature Floating Pill Navbar (Matching Reference Screen 3) */}
       {showNavbar && (

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { ChevronRight } from 'lucide-react-native';
 import {
@@ -9,6 +9,7 @@ import {
 } from '../../../services/chess/strategyLibrary';
 import { ChessPieceArtwork } from '../../../components/chess/ChessPieceArtwork';
 import { LiquidGlassCard } from '../../../components/ui/LiquidGlassCard';
+import { KineticPressable } from '../../../components/ui/MotionPrimitives';
 import { spacing, radii } from '../../../theme/spacing';
 
 interface HomeStrategyTabProps {
@@ -21,7 +22,7 @@ export const HomeStrategyTab: React.FC<HomeStrategyTabProps> = ({ onAnalyzePosit
   const filteredStrategies = getStrategiesByCategory(strategyCategory);
 
   const handleCategorySwitch = (cat: StrategyCategory) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
     setStrategyCategory(cat);
   };
 
@@ -36,8 +37,10 @@ export const HomeStrategyTab: React.FC<HomeStrategyTabProps> = ({ onAnalyzePosit
       >
         {(['all', 'openings', 'tactics', 'middlegame', 'endgame'] as StrategyCategory[]).map(
           (cat) => (
-            <TouchableOpacity
+            <KineticPressable
               key={cat}
+              scaleTo={0.9}
+              hapticStyle="selection"
               style={[
                 styles.categoryPill,
                 strategyCategory === cat && styles.activeCategoryPill,
@@ -52,18 +55,19 @@ export const HomeStrategyTab: React.FC<HomeStrategyTabProps> = ({ onAnalyzePosit
               >
                 {cat.charAt(0).toUpperCase() + cat.slice(1)}
               </Text>
-            </TouchableOpacity>
+            </KineticPressable>
           )
         )}
       </ScrollView>
 
-      {/* Strategy Cards List with Liquid Glassmorphism */}
+      {/* Strategy Cards List with Liquid Glassmorphism & Staggered Cascade */}
       <View style={styles.strategyList}>
-        {filteredStrategies.map((item: StrategyItem) => (
+        {filteredStrategies.map((item: StrategyItem, idx: number) => (
           <LiquidGlassCard
-            key={item.id}
+            key={`${strategyCategory}_${item.id}`}
             variant="strategy"
             causticPosition="right"
+            staggerIndex={idx}
             style={styles.strategyCard}
             onPress={() => onAnalyzePosition(item.fen)}
           >
@@ -87,9 +91,14 @@ export const HomeStrategyTab: React.FC<HomeStrategyTabProps> = ({ onAnalyzePosit
               </View>
             </View>
 
-            {/* Offset 3D Chess Piece with Fade Texture & Liquid Refraction */}
+            {/* Offset 3D Chess Piece with Fade Texture & Counter-Parallax */}
             <View style={styles.strategyOffsetPiece}>
-              <ChessPieceArtwork piece={item.featuredPiece} size={100} color="white" />
+              <ChessPieceArtwork
+                piece={item.featuredPiece}
+                size={100}
+                color="white"
+                floatDelay={idx * 160}
+              />
             </View>
           </LiquidGlassCard>
         ))}

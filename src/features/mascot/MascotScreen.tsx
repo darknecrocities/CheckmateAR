@@ -1,9 +1,9 @@
 import React from 'react';
-import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, ScrollView, Dimensions } from 'react-native';
 import { ArrowLeft, MoreHorizontal, Shield, Sparkles, Zap, Layers } from 'lucide-react-native';
 import { ChessMascot3D } from '../../components/mascot/ChessMascot3D';
 import { LiquidGlassCard } from '../../components/ui/LiquidGlassCard';
-import { colors } from '../../theme/colors';
+import { KineticPressable } from '../../components/ui/MotionPrimitives';
 import { spacing, radii } from '../../theme/spacing';
 import { typography } from '../../theme/typography';
 
@@ -19,16 +19,16 @@ export const MascotScreen: React.FC<MascotScreenProps> = ({ onBack, onStartAR })
     <SafeAreaView style={styles.safeArea}>
       {/* Top Header */}
       <View style={styles.header}>
-        <TouchableOpacity style={styles.iconBtn} onPress={onBack} accessibilityLabel="Back">
+        <KineticPressable style={styles.iconBtn} scaleTo={0.88} onPress={onBack} accessibilityLabel="Back">
           <ArrowLeft size={20} color="#FFFFFF" />
-        </TouchableOpacity>
+        </KineticPressable>
         <View style={styles.titleWrap}>
           <Text style={styles.headerTitle}>Grandmaster Knight</Text>
           <Text style={styles.headerSub}>Official 3D AR Mascot</Text>
         </View>
-        <TouchableOpacity style={styles.iconBtn} accessibilityLabel="Options">
+        <KineticPressable style={styles.iconBtn} scaleTo={0.88} onPress={() => {}} accessibilityLabel="Options">
           <MoreHorizontal size={20} color="#FFFFFF" />
-        </TouchableOpacity>
+        </KineticPressable>
       </View>
 
       <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}>
@@ -38,22 +38,22 @@ export const MascotScreen: React.FC<MascotScreenProps> = ({ onBack, onStartAR })
         {/* Blueprint Specifications Grid with Liquid Glass Optics */}
         <Text style={styles.sectionHeader}>CAD Specifications</Text>
         <View style={styles.specsGrid}>
-          <LiquidGlassCard variant="spec" causticPosition="corner" style={styles.specCard}>
+          <LiquidGlassCard variant="spec" causticPosition="corner" staggerIndex={1} style={styles.specCard}>
             <Layers size={18} color="#D4D4D4" />
             <Text style={styles.specLabel}>Height Bounds</Text>
             <Text style={styles.specValue}>150 MM</Text>
           </LiquidGlassCard>
-          <LiquidGlassCard variant="spec" causticPosition="corner" style={styles.specCard}>
+          <LiquidGlassCard variant="spec" causticPosition="corner" staggerIndex={2} style={styles.specCard}>
             <Zap size={18} color="#D4D4D4" />
             <Text style={styles.specLabel}>Pedestal Diameter</Text>
             <Text style={styles.specValue}>70 MM</Text>
           </LiquidGlassCard>
-          <LiquidGlassCard variant="spec" causticPosition="corner" style={styles.specCard}>
+          <LiquidGlassCard variant="spec" causticPosition="corner" staggerIndex={3} style={styles.specCard}>
             <Shield size={18} color="#D4D4D4" />
             <Text style={styles.specLabel}>Tactical Role</Text>
             <Text style={styles.specValue}>Fork & Battery</Text>
           </LiquidGlassCard>
-          <LiquidGlassCard variant="spec" causticPosition="corner" style={styles.specCard}>
+          <LiquidGlassCard variant="spec" causticPosition="corner" staggerIndex={4} style={styles.specCard}>
             <Sparkles size={18} color="#D4D4D4" />
             <Text style={styles.specLabel}>Material Shading</Text>
             <Text style={styles.specValue}>Obsidian Ceramic</Text>
@@ -61,7 +61,7 @@ export const MascotScreen: React.FC<MascotScreenProps> = ({ onBack, onStartAR })
         </View>
 
         {/* Tactical Mascot Bio with Liquid Meniscus Sheen */}
-        <LiquidGlassCard variant="default" causticPosition="right" style={styles.bioCard}>
+        <LiquidGlassCard variant="default" causticPosition="right" staggerIndex={5} style={styles.bioCard}>
           <Text style={styles.bioTitle}>About The Knight</Text>
           <Text style={styles.bioText}>
             The only piece on the board capable of jumping over friendly and hostile lines.

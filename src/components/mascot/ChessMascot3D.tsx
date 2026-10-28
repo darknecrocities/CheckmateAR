@@ -1,11 +1,18 @@
-import React, { useState, useMemo } from 'react';
-import { View, Text, StyleSheet, Dimensions, PanResponder, TouchableOpacity } from 'react-native';
-import Svg, { Polygon, Line, Circle, G, Rect, Text as SvgText } from 'react-native-svg';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Dimensions,
+  PanResponder,
+  Animated,
+} from 'react-native';
+import Svg, { Polygon, Line, Circle, Ellipse, G, Text as SvgText } from 'react-native-svg';
 import * as Haptics from 'expo-haptics';
-import { RotateCw, Eye, Sparkles, RefreshCw } from 'lucide-react-native';
-import { colors } from '../../theme/colors';
+import { RotateCw, Eye, Sparkles, Zap } from 'lucide-react-native';
+import { KineticPressable } from '../ui/MotionPrimitives';
+import { motion } from '../../theme/motion';
 import { spacing, radii } from '../../theme/spacing';
-import { typography } from '../../theme/typography';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CANVAS_SIZE = Math.min(SCREEN_WIDTH - 32, 340);
@@ -58,21 +65,46 @@ interface ChessMascot3DProps {
 }
 
 export const ChessMascot3D: React.FC<ChessMascot3DProps> = ({ onSpawnInAR }) => {
-  const [rotY, setRotY] = useState<number>(0.4);
+  const [rotY, setRotY] = useState<number>(0.45);
   const [rotX, setRotX] = useState<number>(-0.2);
+  const [hoverPhase, setHoverPhase] = useState<number>(0);
   const [isWireframe, setIsWireframe] = useState<boolean>(false);
+  const [isDragging, setIsDragging] = useState<boolean>(false);
+
+  const leapY = useRef(new Animated.Value(0)).current;
+  const leapScale = useRef(new Animated.Value(1)).current;
+
+  // Continuous Autonomous 3D Orbit & Breathing Levitation
+  useEffect(() => {
+    if (isDragging) return;
+    const timer = setInterval(() => {
+      setRotY((prev) => prev + 0.025);
+      setHoverPhase((prev) => prev + 0.09);
+    }, 32);
+
+    return () => clearInterval(timer);
+  }, [isDragging]);
 
   const panResponder = useMemo(
     () =>
       PanResponder.create({
         onStartShouldSetPanResponder: () => true,
+        onPanResponderGrant: () => {
+          setIsDragging(true);
+          Haptics.selectionAsync().catch(() => {});
+        },
         onPanResponderMove: (_, gestureState) => {
           setRotY((prev) => prev + gestureState.vx * 0.08);
           setRotX((prev) => Math.max(-0.6, Math.min(0.6, prev - gestureState.vy * 0.06)));
         },
+        onPanResponderRelease: () => setIsDragging(false),
+        onPanResponderTerminate: () => setIsDragging(false),
       }),
     []
   );
+
+  const hoverOffsetY = Math.sin(hoverPhase) * 6;
+  const shadowRadiusX = 48 - Math.sin(hoverPhase) * 6;
 
   // 3D Rotation Matrix Projection
   const projectedFaces = useMemo(() => {
@@ -85,12 +117,10 @@ export const ChessMascot3D: React.FC<ChessMascot3DProps> = ({ onSpawnInAR }) => 
     const fov = 340;
 
     const rotated = KNIGHT_VERTICES.map((v) => {
-      // Rotate Y
       const x1 = v.x * cosY + v.z * sinY;
       const z1 = -v.x * sinY + v.z * cosY;
-      // Rotate X
-      const y2 = v.y * cosX - z1 * sinX;
-      const z2 = v.y * sinX + z1 * cosX;
+      const y2 = (v.y + hoverOffsetY) * cosX - z1 * sinX;
+      const z2 = (v.y + hoverOffsetY) * sinX + z1 * cosX;
 
       const scale = fov / (fov + z2 + 80);
       return {
@@ -109,24 +139,57 @@ export const ChessMascot3D: React.FC<ChessMascot3DProps> = ({ onSpawnInAR }) => 
         avgZ,
       };
     }).sort((a, b) => b.avgZ - a.avgZ);
-  }, [rotY, rotX]);
+  }, [rotY, rotX, hoverOffsetY]);
 
   const snapRotate = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
     setRotY((prev) => prev + Math.PI / 2);
   };
 
-  const resetOrbit = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setRotY(0.4);
-    setRotX(-0.2);
+  const triggerKnightLeap = () => {
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+    setRotY((prev) => prev + Math.PI);
+
+    Animated.parallel([
+      Animated.sequence([
+        Animated.spring(leapY, {
+          toValue: -22,
+          ...motion.spring.mascotLeap,
+          useNativeDriver: true,
+        }),
+        Animated.spring(leapY, {
+          toValue: 0,
+          ...motion.spring.bouncy,
+          useNativeDriver: true,
+        }),
+      ]),
+      Animated.sequence([
+        Animated.spring(leapScale, {
+          toValue: 1.09,
+          ...motion.spring.mascotLeap,
+          useNativeDriver: true,
+        }),
+        Animated.spring(leapScale, {
+          toValue: 1,
+          ...motion.spring.bouncy,
+          useNativeDriver: true,
+        }),
+      ]),
+    ]).start();
   };
 
   return (
     <View style={styles.cardContainer}>
       {/* 3D Blueprint Viewport */}
-      <View {...panResponder.panHandlers} style={styles.viewport}>
-        {/* Subtle Isometric Grid Texture */}
+      <Animated.View
+        {...panResponder.panHandlers}
+        style={[
+          styles.viewport,
+          {
+            transform: [{ translateY: leapY }, { scale: leapScale }],
+          },
+        ]}
+      >
         <Svg width={CANVAS_SIZE} height={CANVAS_SIZE} style={StyleSheet.absoluteFill}>
           {[40, 90, 140, 190, 240, 290].map((coord) => (
             <Line
@@ -151,24 +214,35 @@ export const ChessMascot3D: React.FC<ChessMascot3DProps> = ({ onSpawnInAR }) => 
             />
           ))}
 
+          {/* Dynamic Levitation Shadow Ring under Pedestal */}
+          <Ellipse
+            cx={CANVAS_SIZE / 2}
+            cy={CANVAS_SIZE * 0.78}
+            rx={shadowRadiusX}
+            ry={shadowRadiusX * 0.28}
+            fill="rgba(255, 255, 255, 0.08)"
+            stroke="rgba(255, 255, 255, 0.22)"
+            strokeWidth={1}
+          />
+
           {/* Render 3D Mascot Polygons */}
           {projectedFaces.map((f, i) => {
             const depthFactor = Math.max(0.15, Math.min(0.9, (f.avgZ + 60) / 120));
             const fillColor = isWireframe
               ? 'rgba(0, 0, 0, 0.5)'
-              : `rgba(255, 255, 255, ${0.12 + depthFactor * 0.45})`;
+              : `rgba(255, 255, 255, ${0.14 + depthFactor * 0.48})`;
             return (
               <Polygon
                 key={`face_${f.faceIdx}_${i}`}
                 points={f.points}
                 fill={fillColor}
-                stroke={isWireframe ? '#FFFFFF' : 'rgba(255, 255, 255, 0.65)'}
-                strokeWidth={isWireframe ? 1.4 : 0.8}
+                stroke={isWireframe ? '#FFFFFF' : 'rgba(255, 255, 255, 0.7)'}
+                strokeWidth={isWireframe ? 1.4 : 0.85}
               />
             );
           })}
 
-          {/* Dimension Bounds Overlays (Matching Reference Screen 2) */}
+          {/* Dimension Bounds Overlays */}
           <G stroke="#FFFFFF" strokeWidth={1} strokeDasharray="3 3">
             <Line x1={CANVAS_SIZE * 0.16} y1={CANVAS_SIZE * 0.12} x2={CANVAS_SIZE * 0.84} y2={CANVAS_SIZE * 0.12} />
             <Line x1={CANVAS_SIZE * 0.88} y1={CANVAS_SIZE * 0.14} x2={CANVAS_SIZE * 0.88} y2={CANVAS_SIZE * 0.86} />
@@ -205,32 +279,43 @@ export const ChessMascot3D: React.FC<ChessMascot3DProps> = ({ onSpawnInAR }) => 
 
         {/* Top-Right 3D Orientation Cube Indicator */}
         <View style={styles.orientationCube}>
-          <Text style={styles.cubeLabel}>3D ORBIT</Text>
+          <Text style={styles.cubeLabel}>{isDragging ? 'MANUAL ORBIT' : 'LIVE KINETIC 3D'}</Text>
         </View>
-      </View>
+      </Animated.View>
 
-      {/* Control Actions Toolbar */}
+      {/* Kinetic Control Actions Toolbar */}
       <View style={styles.toolbar}>
-        <TouchableOpacity style={styles.toolBtn} onPress={snapRotate}>
-          <RotateCw size={15} color="#FFFFFF" />
-          <Text style={styles.toolBtnText}>Rotate 90°</Text>
-        </TouchableOpacity>
+        <KineticPressable style={styles.toolBtn} scaleTo={0.9} hapticStyle="medium" onPress={triggerKnightLeap}>
+          <Zap size={14} color="#FFFFFF" />
+          <Text style={styles.toolBtnText}>Leap</Text>
+        </KineticPressable>
 
-        <TouchableOpacity style={styles.toolBtn} onPress={() => setIsWireframe((p) => !p)}>
-          <Eye size={15} color="#FFFFFF" />
-          <Text style={styles.toolBtnText}>{isWireframe ? 'Shaded' : 'Wireframe'}</Text>
-        </TouchableOpacity>
+        <KineticPressable style={styles.toolBtn} scaleTo={0.9} hapticStyle="medium" onPress={snapRotate}>
+          <RotateCw size={14} color="#FFFFFF" />
+          <Text style={styles.toolBtnText}>Spin 90°</Text>
+        </KineticPressable>
 
-        <TouchableOpacity style={styles.toolBtn} onPress={resetOrbit}>
-          <RefreshCw size={15} color="#FFFFFF" />
-          <Text style={styles.toolBtnText}>Reset</Text>
-        </TouchableOpacity>
+        <KineticPressable
+          style={styles.toolBtn}
+          scaleTo={0.9}
+          hapticStyle="light"
+          onPress={() => setIsWireframe((p) => !p)}
+        >
+          <Eye size={14} color="#FFFFFF" />
+          <Text style={styles.toolBtnText}>{isWireframe ? 'Shaded' : 'Mesh'}</Text>
+        </KineticPressable>
 
         {onSpawnInAR && (
-          <TouchableOpacity style={[styles.toolBtn, styles.arBtn]} onPress={onSpawnInAR}>
-            <Sparkles size={15} color="#000000" />
+          <KineticPressable
+            style={[styles.toolBtn, styles.arBtn]}
+            scaleTo={0.9}
+            enablePulse
+            hapticStyle="medium"
+            onPress={onSpawnInAR}
+          >
+            <Sparkles size={14} color="#000000" />
             <Text style={[styles.toolBtnText, styles.arBtnText]}>View AR</Text>
-          </TouchableOpacity>
+          </KineticPressable>
         )}
       </View>
     </View>
@@ -239,10 +324,10 @@ export const ChessMascot3D: React.FC<ChessMascot3DProps> = ({ onSpawnInAR }) => 
 
 const styles = StyleSheet.create({
   cardContainer: {
-    backgroundColor: '#0A0A0A',
+    backgroundColor: 'rgba(16, 16, 18, 0.8)',
     borderRadius: radii.xl,
-    borderWidth: 1,
-    borderColor: '#262626',
+    borderWidth: 1.2,
+    borderColor: 'rgba(255, 255, 255, 0.14)',
     padding: spacing.md,
     alignItems: 'center',
     marginVertical: spacing.md,
@@ -255,7 +340,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     position: 'relative',
     borderWidth: 1,
-    borderColor: '#171717',
+    borderColor: '#1F1F1F',
   },
   orientationCube: {
     position: 'absolute',
@@ -263,10 +348,10 @@ const styles = StyleSheet.create({
     right: spacing.sm,
     paddingHorizontal: spacing.sm,
     paddingVertical: 3,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
     borderRadius: radii.sm,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    borderColor: 'rgba(255, 255, 255, 0.22)',
   },
   cubeLabel: {
     color: '#FFFFFF',
@@ -276,7 +361,7 @@ const styles = StyleSheet.create({
   },
   toolbar: {
     flexDirection: 'row',
-    gap: spacing.sm,
+    gap: spacing.xs + 2,
     marginTop: spacing.md,
     width: '100%',
     justifyContent: 'center',
@@ -286,16 +371,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 4,
     paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs + 2,
+    paddingVertical: spacing.xs + 3,
     borderRadius: radii.md,
-    backgroundColor: '#171717',
+    backgroundColor: 'rgba(28, 28, 32, 0.9)',
     borderWidth: 1,
-    borderColor: '#262626',
+    borderColor: 'rgba(255, 255, 255, 0.14)',
   },
   toolBtnText: {
     color: '#FFFFFF',
     fontSize: 11,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   arBtn: {
     backgroundColor: '#FFFFFF',
@@ -303,6 +388,6 @@ const styles = StyleSheet.create({
   },
   arBtnText: {
     color: '#000000',
-    fontWeight: '700',
+    fontWeight: '800',
   },
 });

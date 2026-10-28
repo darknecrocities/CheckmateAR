@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -6,13 +6,22 @@ import {
   SafeAreaView,
   ScrollView,
   TouchableOpacity,
+  Animated,
+  Dimensions,
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { Zap } from 'lucide-react-native';
 
 import { HomeStartTab } from './components/HomeStartTab';
 import { HomeStrategyTab } from './components/HomeStrategyTab';
+import { KineticMascotCompanion } from '../../components/mascot/KineticMascotCompanion';
+import { KineticPressable } from '../../components/ui/MotionPrimitives';
+import { motion } from '../../theme/motion';
 import { spacing, radii } from '../../theme/spacing';
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const TRACK_INNER_WIDTH = SCREEN_WIDTH - spacing.md * 2 - 8;
+const SEGMENT_PILL_WIDTH = TRACK_INNER_WIDTH / 2;
 
 interface HomeScreenProps {
   onStartScan: () => void;
@@ -29,15 +38,23 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   onOpenMascot,
 }) => {
   const [activeTab, setActiveTab] = useState<'start' | 'strategy'>('start');
+  const slideX = useRef(new Animated.Value(0)).current;
 
   const handleTabSwitch = (tab: 'start' | 'strategy') => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    if (tab === activeTab) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
     setActiveTab(tab);
+
+    Animated.spring(slideX, {
+      toValue: tab === 'start' ? 0 : SEGMENT_PILL_WIDTH,
+      ...motion.spring.tabSlide,
+      useNativeDriver: true,
+    }).start();
   };
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      {/* Top Header Row (Matching Reference Screen 1) */}
+      {/* Top Header Row */}
       <View style={styles.topHeader}>
         <View style={styles.brandRow}>
           <View style={styles.logoBadge}>
@@ -46,20 +63,33 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           <Text style={styles.brandTitle}>CheckmateAR</Text>
         </View>
 
-        <TouchableOpacity
+        <KineticPressable
           style={styles.powerPill}
-          activeOpacity={0.85}
-          onPress={() => Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)}
+          scaleTo={0.9}
+          hapticStyle="medium"
+          onPress={() => {
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+          }}
         >
           <Zap size={14} color="#000000" fill="#000000" />
           <Text style={styles.powerPillText}>Engine Max</Text>
-        </TouchableOpacity>
+        </KineticPressable>
       </View>
 
-      {/* Segmented Dual-Pill Switcher: [ Start ] vs [ Strategy ] */}
+      {/* Kinetic Sliding Dual-Pill Switcher: [ Start ] vs [ Strategy ] */}
       <View style={styles.segmentedContainer}>
+        <Animated.View
+          style={[
+            styles.slidingIndicator,
+            {
+              width: SEGMENT_PILL_WIDTH,
+              transform: [{ translateX: slideX }],
+            },
+          ]}
+        />
+
         <TouchableOpacity
-          style={[styles.segmentBtn, activeTab === 'start' && styles.activeSegmentBtn]}
+          style={styles.segmentBtn}
           onPress={() => handleTabSwitch('start')}
           activeOpacity={0.85}
         >
@@ -69,7 +99,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[styles.segmentBtn, activeTab === 'strategy' && styles.activeSegmentBtn]}
+          style={styles.segmentBtn}
           onPress={() => handleTabSwitch('strategy')}
           activeOpacity={0.85}
         >
@@ -78,6 +108,12 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           </Text>
         </TouchableOpacity>
       </View>
+
+      {/* Interactive Living 3D Knight Mascot Companion */}
+      <KineticMascotCompanion
+        reactionTrigger={activeTab}
+        onOpenMascotStudio={onOpenMascot}
+      />
 
       <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}>
         {activeTab === 'start' ? (
@@ -158,15 +194,22 @@ const styles = StyleSheet.create({
     padding: 3,
     borderWidth: 1.2,
     borderColor: 'rgba(255, 255, 255, 0.12)',
+    position: 'relative',
+  },
+  slidingIndicator: {
+    position: 'absolute',
+    top: 3,
+    bottom: 3,
+    left: 3,
+    backgroundColor: '#FFFFFF',
+    borderRadius: radii.pill,
   },
   segmentBtn: {
     flex: 1,
     paddingVertical: 9,
     borderRadius: radii.pill,
     alignItems: 'center',
-  },
-  activeSegmentBtn: {
-    backgroundColor: '#FFFFFF',
+    zIndex: 2,
   },
   segmentText: {
     color: '#737373',
@@ -180,7 +223,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    padding: spacing.md,
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.xs,
     paddingBottom: 110,
   },
 });
