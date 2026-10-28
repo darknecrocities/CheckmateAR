@@ -13,6 +13,8 @@ interface HomeStartTabProps {
   onOpenAnalysis: () => void;
   onOpenMascot: () => void;
   onOpenCoach: () => void;
+  onOpenTrainer?: () => void;
+  onOpenHistory?: () => void;
 }
 
 export const HomeStartTab: React.FC<HomeStartTabProps> = ({
@@ -20,6 +22,8 @@ export const HomeStartTab: React.FC<HomeStartTabProps> = ({
   onOpenAnalysis,
   onOpenMascot,
   onOpenCoach,
+  onOpenTrainer,
+  onOpenHistory,
 }) => {
   return (
     <>
@@ -52,7 +56,7 @@ export const HomeStartTab: React.FC<HomeStartTabProps> = ({
         </View>
       </LiquidGlassCard>
 
-      {/* 2-Column Cube Cards Grid with Liquid Refraction */}
+      {/* 2-Column Kinetic Cube Cards Grid */}
       <Text style={styles.sectionHeader}>Core Capabilities</Text>
       <View style={styles.cubeGrid}>
         {/* Cube Card 1: Live AR Scan */}
@@ -66,7 +70,7 @@ export const HomeStartTab: React.FC<HomeStartTabProps> = ({
           <Text style={styles.cubeDate}>CameraX Stream</Text>
           <Text style={styles.cubeTitle}>AR Vision</Text>
           <View style={styles.cubeOffsetPiece}>
-            <ChessPieceArtwork piece="b" size={82} color="white" floatDelay={180} />
+            <ChessPieceArtwork piece="b" size={82} color="white" floatDelay={150} />
           </View>
         </LiquidGlassCard>
 
@@ -81,37 +85,67 @@ export const HomeStartTab: React.FC<HomeStartTabProps> = ({
           <Text style={styles.cubeDate}>Depth 14 Multi-PV</Text>
           <Text style={styles.cubeTitle}>Engine Spar</Text>
           <View style={styles.cubeOffsetPiece}>
-            <ChessPieceArtwork piece="q" size={82} color="white" floatDelay={360} />
+            <ChessPieceArtwork piece="q" size={82} color="white" floatDelay={300} />
           </View>
         </LiquidGlassCard>
 
-        {/* Cube Card 3: 3D Mascot Studio */}
+        {/* Cube Card 3: Interactive Tactical Puzzle Trainer */}
         <LiquidGlassCard
           variant="cube"
           causticPosition="corner"
           staggerIndex={3}
+          style={styles.cubeCard}
+          onPress={onOpenTrainer ?? onOpenAnalysis}
+        >
+          <Text style={styles.cubeDate}>Interactive ELO Drills</Text>
+          <Text style={styles.cubeTitle}>Tactical Rush</Text>
+          <View style={styles.cubeOffsetPiece}>
+            <ChessPieceArtwork piece="r" size={82} color="white" floatDelay={450} />
+          </View>
+        </LiquidGlassCard>
+
+        {/* Cube Card 4: 3D Mascot Studio */}
+        <LiquidGlassCard
+          variant="cube"
+          causticPosition="corner"
+          staggerIndex={4}
           style={styles.cubeCard}
           onPress={onOpenMascot}
         >
           <Text style={styles.cubeDate}>CAD Blueprint</Text>
           <Text style={styles.cubeTitle}>3D Mascot</Text>
           <View style={styles.cubeOffsetPiece}>
-            <ChessPieceArtwork piece="n" size={82} color="white" floatDelay={540} />
+            <ChessPieceArtwork piece="n" size={82} color="white" floatDelay={600} />
           </View>
         </LiquidGlassCard>
 
-        {/* Cube Card 4: AI Tactical Coach */}
+        {/* Cube Card 5: AI Tactical Coach */}
         <LiquidGlassCard
           variant="cube"
           causticPosition="corner"
-          staggerIndex={4}
+          staggerIndex={5}
           style={styles.cubeCard}
           onPress={onOpenCoach}
         >
           <Text style={styles.cubeDate}>Grounded Mentor</Text>
           <Text style={styles.cubeTitle}>AI Coach</Text>
           <View style={styles.cubeOffsetPiece}>
-            <ChessPieceArtwork piece="k" size={82} color="white" floatDelay={720} />
+            <ChessPieceArtwork piece="k" size={82} color="white" floatDelay={750} />
+          </View>
+        </LiquidGlassCard>
+
+        {/* Cube Card 6: Saved Match & Study Vault */}
+        <LiquidGlassCard
+          variant="cube"
+          causticPosition="corner"
+          staggerIndex={6}
+          style={styles.cubeCard}
+          onPress={onOpenHistory ?? onOpenAnalysis}
+        >
+          <Text style={styles.cubeDate}>Persistent Sessions</Text>
+          <Text style={styles.cubeTitle}>Match Vault</Text>
+          <View style={styles.cubeOffsetPiece}>
+            <ChessPieceArtwork piece="p" size={82} color="white" floatDelay={900} />
           </View>
         </LiquidGlassCard>
       </View>
@@ -120,7 +154,7 @@ export const HomeStartTab: React.FC<HomeStartTabProps> = ({
       <LiquidGlassCard
         variant="default"
         causticPosition="none"
-        staggerIndex={5}
+        staggerIndex={7}
         style={styles.offlineCard}
       >
         <ShieldCheck size={18} color="#FFFFFF" />

@@ -1,10 +1,12 @@
-import React, { useId, useState } from 'react';
+import React, { useEffect, useId, useRef, useState } from 'react';
 import {
   View,
   StyleSheet,
   StyleProp,
   ViewStyle,
   Platform,
+  Animated,
+  Easing,
 } from 'react-native';
 import Svg, {
   Defs,
@@ -27,13 +29,14 @@ export interface LiquidGlassCardProps {
   causticPosition?: 'right' | 'corner' | 'center' | 'none';
   staggerIndex?: number;
   scaleTo?: number;
+  enableGlareSweep?: boolean;
   testID?: string;
 }
 
 /**
- * Apple-grade Glassmorphism container with fluid liquid refraction optics,
- * organic caustics, specular meniscus edge highlights, and Framer-Motion-style
- * spring press physics (`whileTap` + staggered entrance cascade).
+ * Kinetic Motion Liquid Glass Card with fluid refraction optics,
+ * animated diagonal specular glare sweep, 3D press compression,
+ * and automatic 3D piece counter-parallax.
  */
 export const LiquidGlassCard: React.FC<LiquidGlassCardProps> = ({
   children,
@@ -43,9 +46,11 @@ export const LiquidGlassCard: React.FC<LiquidGlassCardProps> = ({
   causticPosition = 'right',
   staggerIndex,
   scaleTo,
+  enableGlareSweep = true,
   testID,
 }) => {
   const [isPressed, setIsPressed] = useState(false);
+  const glareX = useRef(new Animated.Value(-160)).current;
   const rawId = useId();
   const idPrefix = `lgc_${rawId.replace(/[^a-zA-Z0-9]/g, '_')}`;
 
@@ -55,9 +60,33 @@ export const LiquidGlassCard: React.FC<LiquidGlassCardProps> = ({
   const specularGradId = `${idPrefix}_specular`;
 
   const targetScale =
-    scaleTo ?? (variant === 'cube' ? 0.94 : variant === 'featured' ? 0.965 : 0.96);
+    scaleTo ?? (variant === 'cube' ? 0.935 : variant === 'featured' ? 0.96 : 0.955);
 
-  // Caustic center based on variant/prop
+  const triggerGlareSweep = (delayMs = 0) => {
+    if (!enableGlareSweep) return;
+    glareX.setValue(-160);
+    Animated.timing(glareX, {
+      toValue: 380,
+      duration: 680,
+      delay: delayMs,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: true,
+    }).start();
+  };
+
+  // Initial staggered kinetic glare sweep on mount
+  useEffect(() => {
+    const delay = (staggerIndex ?? 0) * 65 + 180;
+    triggerGlareSweep(delay);
+  }, [staggerIndex]);
+
+  const handlePressState = (pressed: boolean) => {
+    setIsPressed(pressed);
+    if (pressed) {
+      triggerGlareSweep(0);
+    }
+  };
+
   const causticCoords = (() => {
     switch (causticPosition) {
       case 'corner':
@@ -71,28 +100,25 @@ export const LiquidGlassCard: React.FC<LiquidGlassCardProps> = ({
   })();
 
   const renderLiquidOptics = () => {
-    const causticPeak = isPressed ? 0.26 : 0.16;
-    const specularPeak = isPressed ? 0.68 : 0.4;
+    const causticPeak = isPressed ? 0.28 : 0.16;
+    const specularPeak = isPressed ? 0.72 : 0.42;
 
     return (
       <View style={StyleSheet.absoluteFill} pointerEvents="none">
         <Svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none">
           <Defs>
-            {/* Ambient Frosted Translucent Glass Sheen */}
             <LinearGradient id={sheenGradId} x1="0.1" y1="0" x2="0.9" y2="1">
-              <Stop offset="0%" stopColor="#FFFFFF" stopOpacity={isPressed ? 0.11 : 0.07} />
+              <Stop offset="0%" stopColor="#FFFFFF" stopOpacity={isPressed ? 0.12 : 0.07} />
               <Stop offset="40%" stopColor="#FFFFFF" stopOpacity={0.025} />
               <Stop offset="100%" stopColor="#000000" stopOpacity={0.45} />
             </LinearGradient>
 
-            {/* Flowing Liquid Wave Gradient */}
             <LinearGradient id={waveGradId} x1="0" y1="0.3" x2="1" y2="0.9">
-              <Stop offset="0%" stopColor="#FFFFFF" stopOpacity={isPressed ? 0.12 : 0.08} />
+              <Stop offset="0%" stopColor="#FFFFFF" stopOpacity={isPressed ? 0.13 : 0.08} />
               <Stop offset="50%" stopColor="#A3A3A3" stopOpacity={0.03} />
-              <Stop offset="100%" stopColor="#FFFFFF" stopOpacity={isPressed ? 0.14 : 0.09} />
+              <Stop offset="100%" stopColor="#FFFFFF" stopOpacity={isPressed ? 0.15 : 0.09} />
             </LinearGradient>
 
-            {/* Fluid Refractive Caustic Pool (Beneath 3D Pieces) */}
             <RadialGradient
               id={causticGradId}
               cx={causticCoords.cx}
@@ -104,7 +130,6 @@ export const LiquidGlassCard: React.FC<LiquidGlassCardProps> = ({
               <Stop offset="100%" stopColor="#FFFFFF" stopOpacity={0} />
             </RadialGradient>
 
-            {/* Zenith Specular Lip Highlight */}
             <LinearGradient id={specularGradId} x1="0" y1="0" x2="1" y2="0">
               <Stop offset="0%" stopColor="#FFFFFF" stopOpacity={0.08} />
               <Stop offset="25%" stopColor="#FFFFFF" stopOpacity={specularPeak} />
@@ -113,49 +138,55 @@ export const LiquidGlassCard: React.FC<LiquidGlassCardProps> = ({
             </LinearGradient>
           </Defs>
 
-          {/* 1. Base Frosted Glass Fill */}
           <Rect x="0" y="0" width="100" height="100" fill={`url(#${sheenGradId})`} />
 
-          {/* 2. Primary Fluid Liquid Wave */}
           <Path
             d="M 0,52 C 28,38 62,68 100,48 L 100,100 L 0,100 Z"
             fill={`url(#${waveGradId})`}
           />
 
-          {/* 3. Secondary Micro Fluid Swell */}
           <Path
             d="M 0,72 C 32,84 68,64 100,76 L 100,100 L 0,100 Z"
             fill="#FFFFFF"
-            fillOpacity={isPressed ? 0.045 : 0.025}
+            fillOpacity={isPressed ? 0.05 : 0.025}
           />
 
-          {/* 4. Refractive Caustic Glow Blob */}
           {causticPosition !== 'none' && (
             <Circle
               cx={causticCoords.cx}
               cy={causticCoords.cy}
-              r={isPressed ? '38' : '34'}
+              r={isPressed ? '39' : '34'}
               fill={`url(#${causticGradId})`}
             />
           )}
 
-          {/* 5. Liquid Meniscus Top Lip Highlight (Simulates Glass Edge Glint) */}
           <Path
             d="M 2,1.2 Q 50,0.5 98,1.2"
             stroke={`url(#${specularGradId})`}
-            strokeWidth={isPressed ? 1.8 : 1.4}
+            strokeWidth={isPressed ? 1.9 : 1.4}
             strokeLinecap="round"
             fill="none"
           />
 
-          {/* 6. Liquid Droplet Refraction Lens (Top-Left Specular Node) */}
           {variant !== 'spec' && (
             <>
-              <Circle cx="8" cy="8" r="1.8" fill="#FFFFFF" fillOpacity={isPressed ? 0.35 : 0.2} />
+              <Circle cx="8" cy="8" r="1.8" fill="#FFFFFF" fillOpacity={isPressed ? 0.38 : 0.2} />
               <Circle cx="7.4" cy="7.4" r="0.6" fill="#FFFFFF" fillOpacity={0.65} />
             </>
           )}
         </Svg>
+
+        {/* Kinetic Diagonal Specular Glare Sweep */}
+        {enableGlareSweep && (
+          <Animated.View
+            style={[
+              styles.glareBeam,
+              {
+                transform: [{ translateX: glareX }, { rotate: '22deg' }],
+              },
+            ]}
+          />
+        )}
       </View>
     );
   };
@@ -178,7 +209,7 @@ export const LiquidGlassCard: React.FC<LiquidGlassCardProps> = ({
       staggerIndex={staggerIndex}
       hapticStyle={onPress ? 'light' : 'selection'}
       onPress={onPress ?? (() => {})}
-      onPressStateChange={setIsPressed}
+      onPressStateChange={handlePressState}
       testID={testID}
     >
       {renderLiquidOptics()}
@@ -208,8 +239,18 @@ const styles = StyleSheet.create({
     }),
   },
   pressedGlassBorder: {
-    borderColor: 'rgba(255, 255, 255, 0.32)',
-    backgroundColor: 'rgba(24, 24, 28, 0.82)',
+    borderColor: 'rgba(255, 255, 255, 0.34)',
+    backgroundColor: 'rgba(24, 24, 28, 0.84)',
+  },
+  glareBeam: {
+    position: 'absolute',
+    top: -40,
+    bottom: -40,
+    width: 48,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderLeftWidth: 1,
+    borderRightWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.14)',
   },
   featuredContainer: {
     minHeight: 165,
