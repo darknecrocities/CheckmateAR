@@ -23,41 +23,67 @@ interface Point3D {
   z: number;
 }
 
-// 3D Polygonal Mesh of "The Grandmaster Knight" Mascot
-const KNIGHT_VERTICES: Point3D[] = [
-  // Pedestal base ring
-  { x: -35, y: 70, z: -35 }, { x: 35, y: 70, z: -35 },
-  { x: 35, y: 70, z: 35 }, { x: -35, y: 70, z: 35 },
-  // Lower pedestal neck
-  { x: -25, y: 50, z: -25 }, { x: 25, y: 50, z: -25 },
-  { x: 25, y: 50, z: 25 }, { x: -25, y: 50, z: 25 },
-  // Chest / Shoulder arch
-  { x: -28, y: 15, z: -20 }, { x: 28, y: 15, z: -20 },
-  { x: 28, y: 15, z: 25 }, { x: -28, y: 15, z: 25 },
-  // Neck arch
-  { x: -20, y: -20, z: -15 }, { x: 20, y: -20, z: -15 },
-  { x: 20, y: -20, z: 20 }, { x: -20, y: -20, z: 20 },
-  // Snout forward projection
-  { x: -14, y: -30, z: 38 }, { x: 14, y: -30, z: 38 },
-  { x: 14, y: -18, z: 32 }, { x: -14, y: -18, z: 32 },
-  // Crest / Mane ridge
-  { x: -12, y: -55, z: -10 }, { x: 12, y: -55, z: -10 },
-  // Left & Right Ears
-  { x: -14, y: -65, z: 5 }, { x: 14, y: -65, z: 5 },
+// 3D Polygonal Mesh of "The Grandmaster Queen" Mascot
+const QUEEN_VERTICES: Point3D[] = [
+  // 0..7: Base ring (r=36, y=70)
+  { x: 36.0, y: 70, z: 0.0 }, { x: 25.5, y: 70, z: 25.5 },
+  { x: 0.0, y: 70, z: 36.0 }, { x: -25.5, y: 70, z: 25.5 },
+  { x: -36.0, y: 70, z: 0.0 }, { x: -25.5, y: 70, z: -25.5 },
+  { x: 0.0, y: 70, z: -36.0 }, { x: 25.5, y: 70, z: -25.5 },
+  // 8..15: Pedestal collar (r=28, y=54)
+  { x: 28.0, y: 54, z: 0.0 }, { x: 19.8, y: 54, z: 19.8 },
+  { x: 0.0, y: 54, z: 28.0 }, { x: -19.8, y: 54, z: 19.8 },
+  { x: -28.0, y: 54, z: 0.0 }, { x: -19.8, y: 54, z: -19.8 },
+  { x: 0.0, y: 54, z: -28.0 }, { x: 19.8, y: 54, z: -19.8 },
+  // 16..23: Waist torus (r=18, y=32)
+  { x: 18.0, y: 32, z: 0.0 }, { x: 12.7, y: 32, z: 12.7 },
+  { x: 0.0, y: 32, z: 18.0 }, { x: -12.7, y: 32, z: 12.7 },
+  { x: -18.0, y: 32, z: 0.0 }, { x: -12.7, y: 32, z: -12.7 },
+  { x: 0.0, y: 32, z: -18.0 }, { x: 12.7, y: 32, z: -12.7 },
+  // 24..31: Bodice flare (r=24, y=8)
+  { x: 24.0, y: 8, z: 0.0 }, { x: 17.0, y: 8, z: 17.0 },
+  { x: 0.0, y: 8, z: 24.0 }, { x: -17.0, y: 8, z: 17.0 },
+  { x: -24.0, y: 8, z: 0.0 }, { x: -17.0, y: 8, z: -17.0 },
+  { x: 0.0, y: 8, z: -24.0 }, { x: 17.0, y: 8, z: -17.0 },
+  // 32..39: Slender draped neck (r=16, y=-12)
+  { x: 16.0, y: -12, z: 0.0 }, { x: 11.3, y: -12, z: 11.3 },
+  { x: 0.0, y: -12, z: 16.0 }, { x: -11.3, y: -12, z: 11.3 },
+  { x: -16.0, y: -12, z: 0.0 }, { x: -11.3, y: -12, z: -11.3 },
+  { x: 0.0, y: -12, z: -16.0 }, { x: 11.3, y: -12, z: -11.3 },
+  // 40..47: Coronet crown base (r=26, y=-28)
+  { x: 26.0, y: -28, z: 0.0 }, { x: 18.4, y: -28, z: 18.4 },
+  { x: 0.0, y: -28, z: 26.0 }, { x: -18.4, y: -28, z: 18.4 },
+  { x: -26.0, y: -28, z: 0.0 }, { x: -18.4, y: -28, z: -18.4 },
+  { x: 0.0, y: -28, z: -26.0 }, { x: 18.4, y: -28, z: -18.4 },
+  // 48..55: Crown 8 royal spires (alternating y=-50 and y=-42, r=28)
+  { x: 28.0, y: -50, z: 0.0 }, { x: 19.8, y: -42, z: 19.8 },
+  { x: 0.0, y: -50, z: 28.0 }, { x: -19.8, y: -42, z: 19.8 },
+  { x: -28.0, y: -50, z: 0.0 }, { x: -19.8, y: -42, z: -19.8 },
+  { x: 0.0, y: -50, z: -28.0 }, { x: 19.8, y: -42, z: -19.8 },
+  // 56: Imperial crown pearl finial apex
+  { x: 0.0, y: -62.0, z: 0.0 },
 ];
 
-const KNIGHT_FACES: number[][] = [
-  // Base
-  [0, 1, 2, 3],
-  [0, 4, 5, 1], [1, 5, 6, 2], [2, 6, 7, 3], [3, 7, 4, 0],
-  // Body to Neck
-  [4, 8, 9, 5], [5, 9, 10, 6], [6, 10, 11, 7], [7, 11, 8, 4],
-  // Neck to Head
-  [8, 12, 13, 9], [9, 13, 14, 10], [10, 14, 15, 11], [11, 15, 12, 8],
-  // Snout
-  [14, 16, 17, 15], [16, 18, 19, 17],
-  // Crest & Ears
-  [12, 20, 21, 13], [20, 22, 23, 21],
+const QUEEN_FACES: number[][] = [
+  // Pedestal base
+  [0, 1, 2, 3, 4, 5, 6, 7],
+  // Ring quads
+  [0, 1, 9, 8], [1, 2, 10, 9], [2, 3, 11, 10], [3, 4, 12, 11],
+  [4, 5, 13, 12], [5, 6, 14, 13], [6, 7, 15, 14], [7, 0, 8, 15],
+  [8, 9, 17, 16], [9, 10, 18, 17], [10, 11, 19, 18], [11, 12, 20, 19],
+  [12, 13, 21, 20], [13, 14, 22, 21], [14, 15, 23, 22], [15, 8, 16, 23],
+  [16, 17, 25, 24], [17, 18, 26, 25], [18, 19, 27, 26], [19, 20, 28, 27],
+  [20, 21, 29, 28], [21, 22, 30, 29], [22, 23, 31, 30], [23, 16, 24, 31],
+  [24, 25, 33, 32], [25, 26, 34, 33], [26, 27, 35, 34], [27, 28, 36, 35],
+  [28, 29, 37, 36], [29, 30, 38, 37], [30, 31, 39, 38], [31, 24, 32, 39],
+  [32, 33, 41, 40], [33, 34, 42, 41], [34, 35, 43, 42], [35, 36, 44, 43],
+  [36, 37, 45, 44], [37, 38, 46, 45], [38, 39, 47, 46], [39, 32, 40, 47],
+  // Crown spires
+  [40, 48, 41], [41, 49, 42], [42, 50, 43], [43, 51, 44],
+  [44, 52, 45], [45, 53, 46], [46, 54, 47], [47, 55, 40],
+  // Pearl finial triangles
+  [48, 49, 56], [49, 50, 56], [50, 51, 56], [51, 52, 56],
+  [52, 53, 56], [53, 54, 56], [54, 55, 56], [55, 48, 56],
 ];
 
 interface ChessMascot3DProps {
@@ -116,7 +142,7 @@ export const ChessMascot3D: React.FC<ChessMascot3DProps> = ({ onSpawnInAR }) => 
     const center = CANVAS_SIZE / 2;
     const fov = 340;
 
-    const rotated = KNIGHT_VERTICES.map((v) => {
+    const rotated = QUEEN_VERTICES.map((v) => {
       const x1 = v.x * cosY + v.z * sinY;
       const z1 = -v.x * sinY + v.z * cosY;
       const y2 = (v.y + hoverOffsetY) * cosX - z1 * sinX;
@@ -130,7 +156,7 @@ export const ChessMascot3D: React.FC<ChessMascot3DProps> = ({ onSpawnInAR }) => 
       };
     });
 
-    return KNIGHT_FACES.map((indices, faceIdx) => {
+    return QUEEN_FACES.map((indices, faceIdx) => {
       const pts = indices.map((idx) => rotated[idx]);
       const avgZ = pts.reduce((sum, p) => sum + p.z, 0) / pts.length;
       return {
@@ -146,14 +172,14 @@ export const ChessMascot3D: React.FC<ChessMascot3DProps> = ({ onSpawnInAR }) => 
     setRotY((prev) => prev + Math.PI / 2);
   };
 
-  const triggerKnightLeap = () => {
+  const triggerQueenAscent = () => {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
     setRotY((prev) => prev + Math.PI);
 
     Animated.parallel([
       Animated.sequence([
         Animated.spring(leapY, {
-          toValue: -22,
+          toValue: -24,
           ...motion.spring.mascotLeap,
           useNativeDriver: true,
         }),
@@ -257,7 +283,7 @@ export const ChessMascot3D: React.FC<ChessMascot3DProps> = ({ onSpawnInAR }) => 
             fontWeight="700"
             textAnchor="middle"
           >
-            75 MM
+            72 MM
           </SvgText>
           <SvgText
             x={CANVAS_SIZE * 0.94}
@@ -267,7 +293,7 @@ export const ChessMascot3D: React.FC<ChessMascot3DProps> = ({ onSpawnInAR }) => 
             fontWeight="700"
             textAnchor="middle"
           >
-            150 MM
+            180 MM
           </SvgText>
 
           {/* Corner Bounding Circles */}
@@ -285,9 +311,9 @@ export const ChessMascot3D: React.FC<ChessMascot3DProps> = ({ onSpawnInAR }) => 
 
       {/* Kinetic Control Actions Toolbar */}
       <View style={styles.toolbar}>
-        <KineticPressable style={styles.toolBtn} scaleTo={0.9} hapticStyle="medium" onPress={triggerKnightLeap}>
+        <KineticPressable style={styles.toolBtn} scaleTo={0.9} hapticStyle="medium" onPress={triggerQueenAscent}>
           <Zap size={14} color="#FFFFFF" />
-          <Text style={styles.toolBtnText}>Leap</Text>
+          <Text style={styles.toolBtnText}>Ascend</Text>
         </KineticPressable>
 
         <KineticPressable style={styles.toolBtn} scaleTo={0.9} hapticStyle="medium" onPress={snapRotate}>

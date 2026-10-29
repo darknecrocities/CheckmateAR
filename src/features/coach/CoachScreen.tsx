@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -7,6 +7,8 @@ import {
   ScrollView,
   TouchableOpacity,
   TextInput,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { ArrowLeft, Send, Sparkles, ShieldAlert, Award } from 'lucide-react-native';
@@ -179,23 +181,29 @@ export const CoachScreen: React.FC<CoachScreenProps> = ({
         </ScrollView>
       </View>
 
-      {/* Custom Input Bar */}
-      <View style={styles.inputContainer}>
-        <TextInput
-          style={styles.textInput}
-          placeholder="Ask a chess question..."
-          placeholderTextColor={colors.dark.textMuted}
-          value={customInput}
-          onChangeText={setCustomInput}
-          onSubmitEditing={() => customInput.trim() && handleSendPrompt(customInput.trim())}
-        />
-        <TouchableOpacity
-          style={styles.sendBtn}
-          onPress={() => customInput.trim() && handleSendPrompt(customInput.trim())}
-        >
-          <Send size={18} color="#052312" />
-        </TouchableOpacity>
-      </View>
+      {/* Keyboard-Aware Input Dock with Floating Navbar Inset */}
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 88 : 0}
+      >
+        <View style={styles.inputContainer}>
+          <TextInput
+            style={styles.textInput}
+            placeholder="Ask a chess question..."
+            placeholderTextColor={colors.dark.textMuted}
+            value={customInput}
+            onChangeText={setCustomInput}
+            onSubmitEditing={() => customInput.trim() && handleSendPrompt(customInput.trim())}
+          />
+          <TouchableOpacity
+            style={styles.sendBtn}
+            onPress={() => customInput.trim() && handleSendPrompt(customInput.trim())}
+            accessibilityLabel="Send chess question"
+          >
+            <Send size={18} color="#09090B" />
+          </TouchableOpacity>
+        </View>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 };
@@ -355,24 +363,29 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.sm,
+    paddingTop: spacing.sm,
+    paddingBottom: Platform.OS === 'android' ? 96 : 88,
     gap: spacing.sm,
-    backgroundColor: colors.dark.surface,
+    backgroundColor: '#0C0C10',
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.08)',
   },
   textInput: {
     flex: 1,
     height: 44,
-    backgroundColor: colors.dark.surfaceElevated,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
     borderRadius: radii.pill,
     paddingHorizontal: spacing.lg,
-    color: colors.dark.textPrimary,
+    color: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.14)',
     ...typography.body,
   },
   sendBtn: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: colors.dark.accent,
+    backgroundColor: '#FFFFFF',
     justifyContent: 'center',
     alignItems: 'center',
   },

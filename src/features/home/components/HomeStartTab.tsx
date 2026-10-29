@@ -1,12 +1,12 @@
 import React from 'react';
 import { View, Text, StyleSheet, Dimensions } from 'react-native';
-import { ArrowRight, ShieldCheck } from 'lucide-react-native';
+import { ArrowRight } from 'lucide-react-native';
 import { ChessPieceArtwork } from '../../../components/chess/ChessPieceArtwork';
 import { LiquidGlassCard } from '../../../components/ui/LiquidGlassCard';
 import { spacing, radii } from '../../../theme/spacing';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const CUBE_CARD_WIDTH = (SCREEN_WIDTH - 40) / 2;
+const GRID_CARD_WIDTH = (SCREEN_WIDTH - spacing.md * 2 - spacing.sm) / 2;
 
 interface HomeStartTabProps {
   onStartScan: () => void;
@@ -15,6 +15,8 @@ interface HomeStartTabProps {
   onOpenCoach: () => void;
   onOpenTrainer?: () => void;
   onOpenHistory?: () => void;
+  onSwitchToStrategy?: () => void;
+  onSwitchToVault?: () => void;
 }
 
 export const HomeStartTab: React.FC<HomeStartTabProps> = ({
@@ -24,10 +26,11 @@ export const HomeStartTab: React.FC<HomeStartTabProps> = ({
   onOpenCoach,
   onOpenTrainer,
   onOpenHistory,
+  onSwitchToVault,
 }) => {
   return (
     <>
-      {/* Horizontal Featured Banner Card with Liquid Glassmorphism & Offset 3D Knight */}
+      {/* Featured Card Section (Restored as requested) */}
       <Text style={styles.sectionHeader}>Featured System</Text>
       <LiquidGlassCard
         variant="featured"
@@ -41,242 +44,209 @@ export const HomeStartTab: React.FC<HomeStartTabProps> = ({
             <Text style={styles.tagPillText}>Live AR Vision</Text>
           </View>
           <Text style={styles.featuredTitle}>Real-Time Board Tracking</Text>
-          <Text style={styles.featuredSub}>
-            Continuous 60 FPS CameraX stream with 64-tile perspective and next-move prediction.
-          </Text>
           <View style={styles.actionArrowRow}>
             <Text style={styles.actionArrowText}>Launch Camera</Text>
             <ArrowRight size={14} color="#FFFFFF" />
           </View>
         </View>
 
-        {/* Offset 3D Knight Artwork with Fade Texture & Counter-Parallax */}
-        <View style={styles.offsetPieceWrap}>
-          <ChessPieceArtwork piece="n" size={135} color="white" floatDelay={0} />
+        {/* 3D Knight Artwork */}
+        <View style={styles.offsetPieceWrap} pointerEvents="none">
+          <ChessPieceArtwork piece="n" size={130} color="white" floatDelay={0} />
         </View>
       </LiquidGlassCard>
 
-      {/* 2-Column Kinetic Cube Cards Grid */}
-      <Text style={styles.sectionHeader}>Core Capabilities</Text>
-      <View style={styles.cubeGrid}>
-        {/* Cube Card 1: Live AR Scan */}
+      {/* 2-Column Clean Capability Cards (Zero dummy descriptions, zero '60 fps' text) */}
+      <Text style={[styles.sectionHeader, styles.recentSectionHeader]}>Core Capabilities</Text>
+      <View style={styles.pedestalGrid}>
+        {/* Card 1: AR Vision */}
         <LiquidGlassCard
-          variant="cube"
-          causticPosition="corner"
+          variant="pedestal"
+          causticPosition="center"
           staggerIndex={1}
-          style={styles.cubeCard}
+          style={styles.pedestalCard}
           onPress={onStartScan}
         >
-          <Text style={styles.cubeDate}>CameraX Stream</Text>
-          <Text style={styles.cubeTitle}>AR Vision</Text>
-          <View style={styles.cubeOffsetPiece}>
-            <ChessPieceArtwork piece="b" size={82} color="white" floatDelay={150} />
+          <View style={styles.cardMetaWrap}>
+            <Text style={styles.cardTitle}>AR Vision</Text>
+          </View>
+          <View style={styles.pedestalPieceWrap} pointerEvents="none">
+            <ChessPieceArtwork piece="n" size={84} color="white" floatDelay={100} />
           </View>
         </LiquidGlassCard>
 
-        {/* Cube Card 2: Deep Stockfish Analysis */}
+        {/* Card 2: Engine Spar */}
         <LiquidGlassCard
-          variant="cube"
-          causticPosition="corner"
+          variant="pedestal"
+          causticPosition="center"
           staggerIndex={2}
-          style={styles.cubeCard}
+          style={styles.pedestalCard}
           onPress={onOpenAnalysis}
         >
-          <Text style={styles.cubeDate}>Depth 14 Multi-PV</Text>
-          <Text style={styles.cubeTitle}>Engine Spar</Text>
-          <View style={styles.cubeOffsetPiece}>
-            <ChessPieceArtwork piece="q" size={82} color="white" floatDelay={300} />
+          <View style={styles.cardMetaWrap}>
+            <Text style={styles.cardTitle}>Engine Spar</Text>
+          </View>
+          <View style={styles.pedestalPieceWrap} pointerEvents="none">
+            <ChessPieceArtwork piece="q" size={84} color="white" floatDelay={200} />
           </View>
         </LiquidGlassCard>
 
-        {/* Cube Card 3: Interactive Tactical Puzzle Trainer */}
+        {/* Card 3: Tactical Rush */}
         <LiquidGlassCard
-          variant="cube"
-          causticPosition="corner"
+          variant="pedestal"
+          causticPosition="center"
           staggerIndex={3}
-          style={styles.cubeCard}
+          style={styles.pedestalCard}
           onPress={onOpenTrainer ?? onOpenAnalysis}
         >
-          <Text style={styles.cubeDate}>Interactive ELO Drills</Text>
-          <Text style={styles.cubeTitle}>Tactical Rush</Text>
-          <View style={styles.cubeOffsetPiece}>
-            <ChessPieceArtwork piece="r" size={82} color="white" floatDelay={450} />
+          <View style={styles.cardMetaWrap}>
+            <Text style={styles.cardTitle}>Tactical Rush</Text>
+          </View>
+          <View style={styles.pedestalPieceWrap} pointerEvents="none">
+            <ChessPieceArtwork piece="r" size={84} color="white" floatDelay={300} />
           </View>
         </LiquidGlassCard>
 
-        {/* Cube Card 4: 3D Mascot Studio */}
+        {/* Card 4: AI Coach */}
         <LiquidGlassCard
-          variant="cube"
-          causticPosition="corner"
+          variant="pedestal"
+          causticPosition="center"
           staggerIndex={4}
-          style={styles.cubeCard}
-          onPress={onOpenMascot}
-        >
-          <Text style={styles.cubeDate}>CAD Blueprint</Text>
-          <Text style={styles.cubeTitle}>3D Mascot</Text>
-          <View style={styles.cubeOffsetPiece}>
-            <ChessPieceArtwork piece="n" size={82} color="white" floatDelay={600} />
-          </View>
-        </LiquidGlassCard>
-
-        {/* Cube Card 5: AI Tactical Coach */}
-        <LiquidGlassCard
-          variant="cube"
-          causticPosition="corner"
-          staggerIndex={5}
-          style={styles.cubeCard}
+          style={styles.pedestalCard}
           onPress={onOpenCoach}
         >
-          <Text style={styles.cubeDate}>Grounded Mentor</Text>
-          <Text style={styles.cubeTitle}>AI Coach</Text>
-          <View style={styles.cubeOffsetPiece}>
-            <ChessPieceArtwork piece="k" size={82} color="white" floatDelay={750} />
+          <View style={styles.cardMetaWrap}>
+            <Text style={styles.cardTitle}>AI Coach</Text>
+          </View>
+          <View style={styles.pedestalPieceWrap} pointerEvents="none">
+            <ChessPieceArtwork piece="k" size={84} color="white" floatDelay={400} />
           </View>
         </LiquidGlassCard>
 
-        {/* Cube Card 6: Saved Match & Study Vault */}
+        {/* Card 5: 3D Mascot */}
         <LiquidGlassCard
-          variant="cube"
-          causticPosition="corner"
-          staggerIndex={6}
-          style={styles.cubeCard}
-          onPress={onOpenHistory ?? onOpenAnalysis}
+          variant="pedestal"
+          causticPosition="center"
+          staggerIndex={5}
+          style={styles.pedestalCard}
+          onPress={onOpenMascot}
         >
-          <Text style={styles.cubeDate}>Persistent Sessions</Text>
-          <Text style={styles.cubeTitle}>Match Vault</Text>
-          <View style={styles.cubeOffsetPiece}>
-            <ChessPieceArtwork piece="p" size={82} color="white" floatDelay={900} />
+          <View style={styles.cardMetaWrap}>
+            <Text style={styles.cardTitle}>3D Mascot</Text>
+          </View>
+          <View style={styles.pedestalPieceWrap} pointerEvents="none">
+            <ChessPieceArtwork piece="q" size={84} color="white" floatDelay={500} />
+          </View>
+        </LiquidGlassCard>
+
+        {/* Card 6: Match Vault */}
+        <LiquidGlassCard
+          variant="pedestal"
+          causticPosition="center"
+          staggerIndex={6}
+          style={styles.pedestalCard}
+          onPress={onSwitchToVault ?? onOpenHistory ?? onOpenAnalysis}
+        >
+          <View style={styles.cardMetaWrap}>
+            <Text style={styles.cardTitle}>Match Vault</Text>
+          </View>
+          <View style={styles.pedestalPieceWrap} pointerEvents="none">
+            <ChessPieceArtwork piece="p" size={84} color="white" floatDelay={600} />
           </View>
         </LiquidGlassCard>
       </View>
-
-      {/* Offline Guarantee Footer Banner */}
-      <LiquidGlassCard
-        variant="default"
-        causticPosition="none"
-        staggerIndex={7}
-        style={styles.offlineCard}
-      >
-        <ShieldCheck size={18} color="#FFFFFF" />
-        <View style={styles.offlineTextWrap}>
-          <Text style={styles.offlineTitle}>100% On-Device Offline Privacy</Text>
-          <Text style={styles.offlineSub}>
-            Camera analysis and Stockfish engine run entirely local without network latency.
-          </Text>
-        </View>
-      </LiquidGlassCard>
     </>
   );
 };
 
 const styles = StyleSheet.create({
   sectionHeader: {
-    color: '#737373',
-    fontSize: 11,
+    color: '#A1A1AA',
+    fontSize: 12.5,
     fontWeight: '700',
-    letterSpacing: 0.8,
-    textTransform: 'uppercase',
-    marginTop: spacing.md,
-    marginBottom: spacing.xs,
+    letterSpacing: 0.2,
+    marginBottom: 8,
+    marginTop: 4,
+  },
+  recentSectionHeader: {
+    marginTop: 18,
   },
   featuredCard: {
     padding: spacing.lg,
     position: 'relative',
-    minHeight: 165,
+    minHeight: 148,
     justifyContent: 'center',
+    marginBottom: 6,
   },
   featuredContent: {
-    width: '66%',
-    gap: 6,
+    width: '68%',
+    gap: 8,
     zIndex: 2,
   },
   tagPill: {
     alignSelf: 'flex-start',
     paddingHorizontal: 8,
     paddingVertical: 3,
-    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    backgroundColor: 'rgba(255, 255, 255, 0.14)',
     borderRadius: radii.sm,
-    borderWidth: 0.8,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.32)',
   },
   tagPillText: {
     color: '#FFFFFF',
     fontSize: 10,
-    fontWeight: '700',
+    fontWeight: '800',
   },
   featuredTitle: {
     color: '#FFFFFF',
     fontSize: 18,
     fontWeight: '800',
-  },
-  featuredSub: {
-    color: '#D4D4D4',
-    fontSize: 11,
-    lineHeight: 16,
+    lineHeight: 22,
   },
   actionArrowRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    marginTop: 4,
+    marginTop: 2,
   },
   actionArrowText: {
     color: '#FFFFFF',
-    fontSize: 12,
+    fontSize: 12.5,
     fontWeight: '700',
   },
   offsetPieceWrap: {
     position: 'absolute',
-    right: -15,
-    bottom: -10,
+    right: -12,
+    bottom: -8,
     zIndex: 1,
   },
-  cubeGrid: {
+  pedestalGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: spacing.sm,
   },
-  cubeCard: {
-    width: CUBE_CARD_WIDTH,
-    padding: spacing.md,
+  pedestalCard: {
+    width: GRID_CARD_WIDTH,
+    height: 154,
+    padding: 14,
     position: 'relative',
   },
-  cubeDate: {
-    color: '#A3A3A3',
-    fontSize: 10,
-    fontWeight: '600',
-  },
-  cubeTitle: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '800',
+  cardMetaWrap: {
     zIndex: 2,
   },
-  cubeOffsetPiece: {
-    position: 'absolute',
-    right: -8,
-    bottom: -8,
-    zIndex: 1,
-  },
-  offlineCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-    padding: spacing.md,
-    marginTop: spacing.lg,
-  },
-  offlineTextWrap: {
-    flex: 1,
-    gap: 2,
-  },
-  offlineTitle: {
+  cardTitle: {
     color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: '700',
+    fontSize: 16.5,
+    fontWeight: '800',
+    letterSpacing: -0.2,
   },
-  offlineSub: {
-    color: '#737373',
-    fontSize: 10,
-    lineHeight: 14,
+  pedestalPieceWrap: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 2,
   },
 });

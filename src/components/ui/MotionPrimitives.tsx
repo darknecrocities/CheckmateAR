@@ -2,13 +2,16 @@ import React, { createContext, useContext, useEffect, useRef, useState } from 'r
 import {
   Animated,
   Easing,
-  TouchableOpacity,
+  Pressable,
   StyleProp,
   ViewStyle,
   StyleSheet,
+  AccessibilityRole,
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { motion } from '../../theme/motion';
+
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 /**
  * Context broadcasting whether a parent card/surface is currently pressed,
@@ -29,6 +32,7 @@ export interface KineticPressableProps {
   enablePulse?: boolean;
   onPressStateChange?: (pressed: boolean) => void;
   accessibilityLabel?: string;
+  accessibilityRole?: AccessibilityRole;
   testID?: string;
   disabled?: boolean;
 }
@@ -48,6 +52,7 @@ export const KineticPressable: React.FC<KineticPressableProps> = ({
   enablePulse = false,
   onPressStateChange,
   accessibilityLabel,
+  accessibilityRole,
   testID,
   disabled = false,
 }) => {
@@ -162,27 +167,25 @@ export const KineticPressable: React.FC<KineticPressableProps> = ({
 
   return (
     <KineticPressContext.Provider value={isPressed}>
-      <TouchableOpacity
-        activeOpacity={1}
+      <AnimatedPressable
         disabled={disabled || !onPress}
         onPressIn={handlePressIn}
         onPressOut={handlePressOut}
         onPress={onPress}
+        hitSlop={8}
         accessibilityLabel={accessibilityLabel}
+        accessibilityRole={accessibilityRole}
         testID={testID}
+        style={[
+          style,
+          {
+            opacity: mountOpacity,
+            transform: [{ scale: combinedScale }, { translateY: combinedTranslateY }],
+          },
+        ]}
       >
-        <Animated.View
-          style={[
-            style,
-            {
-              opacity: mountOpacity,
-              transform: [{ scale: combinedScale }, { translateY: combinedTranslateY }],
-            },
-          ]}
-        >
-          {children}
-        </Animated.View>
-      </TouchableOpacity>
+        {children}
+      </AnimatedPressable>
     </KineticPressContext.Provider>
   );
 };
@@ -286,7 +289,8 @@ export interface KineticRouteTransitionProps {
 }
 
 /**
- * Spatial route transition container that springs screens into view on navigation.
+ * Spatial route transition container that springs screens into view with
+ * fluid directional slide, Apple-grade spatial scale, and tactile micro-haptics.
  */
 export const KineticRouteTransition: React.FC<KineticRouteTransitionProps> = ({
   routeKey,
@@ -298,25 +302,28 @@ export const KineticRouteTransition: React.FC<KineticRouteTransitionProps> = ({
   const scale = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
-    opacity.setValue(0.35);
-    translateY.setValue(10);
-    scale.setValue(0.985);
+    Haptics.selectionAsync().catch(() => {});
+    opacity.setValue(0.2);
+    translateY.setValue(18);
+    scale.setValue(0.95);
 
     Animated.parallel([
       Animated.timing(opacity, {
         toValue: 1,
-        duration: 210,
+        duration: 240,
         easing: Easing.out(Easing.cubic),
         useNativeDriver: true,
       }),
       Animated.spring(translateY, {
         toValue: 0,
-        ...motion.spring.entrance,
+        friction: 8,
+        tension: 65,
         useNativeDriver: true,
       }),
       Animated.spring(scale, {
         toValue: 1,
-        ...motion.spring.entrance,
+        friction: 8,
+        tension: 65,
         useNativeDriver: true,
       }),
     ]).start();

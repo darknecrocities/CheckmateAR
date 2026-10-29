@@ -16,6 +16,7 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleOwner
 import com.facebook.react.bridge.Arguments
 import com.facebook.react.bridge.ReactContext
+import com.facebook.react.bridge.WritableArray
 import com.facebook.react.bridge.WritableMap
 import com.facebook.react.modules.core.DeviceEventManagerModule
 import java.util.concurrent.ExecutorService
@@ -47,12 +48,23 @@ class LiveCameraView @JvmOverloads constructor(
         startCamera()
     }
 
+    private fun getLifecycleOwner(): LifecycleOwner? {
+        var ctx = context
+        while (ctx is android.content.ContextWrapper) {
+            if (ctx is LifecycleOwner) {
+                return ctx
+            }
+            ctx = ctx.baseContext
+        }
+        return (context as? ReactContext)?.currentActivity as? LifecycleOwner
+    }
+
     private fun startCamera() {
         val cameraProviderFuture = ProcessCameraProvider.getInstance(context)
         cameraProviderFuture.addListener({
             try {
                 val cameraProvider = cameraProviderFuture.get()
-                val lifecycleOwner = context as? LifecycleOwner ?: return@addListener
+                val lifecycleOwner = getLifecycleOwner() ?: return@addListener
 
                 val preview = Preview.Builder().build().also {
                     it.setSurfaceProvider(previewView.surfaceProvider)
@@ -82,8 +94,8 @@ class LiveCameraView @JvmOverloads constructor(
 
     private fun processFrame(imageProxy: ImageProxy) {
         val now = System.currentTimeMillis()
-        // Throttle frame processing to ~15 FPS (66ms) to keep CPU cool and battery optimal
-        if (now - lastAnalysisTimestamp < 66) {
+        // Throttle frame processing to ~10 FPS (100ms) to keep bridge and UI thread completely responsive
+        if (now - lastAnalysisTimestamp < 100) {
             imageProxy.close()
             return
         }
@@ -153,8 +165,30 @@ class LiveCameraView @JvmOverloads constructor(
                 }
             }
 
-            val isValid = minGy >= 0 && maxGy > minGy && minGx >= 0 && maxGx > minGx &&
-                    (maxGy - minGy) >= 6 && (maxGx - minGx) >= 6
+            val spanX = if (maxGx > minGx) maxGx - minGx + 1 else 0
+            val spanY = if (maxGy > minGy) maxGy - minGy + 1 else 0
+            val aspectRatio = if (spanY > 0) spanX.toFloat() / spanY.toFloat() else 0f
+
+            // Chessboard must be roughly square (0.70 to 1.35) and have sufficient grid coverage (at least 8 grid cells)
+            val isGeometryValid = minGy >= 0 && maxGy > minGy && minGx >= 0 && maxGx > minGx &&
+                    spanX >= 8 && spanY >= 8 && aspectRatio in 0.70f..1.35f
+
+            var checkerContrast = 0
+            if (isGeometryValid) {
+                var lightSum = 0
+                var darkSum = 0
+                for (r in 0 until 8) {
+                    val gy = (minGy + (r + 0.5f) * (spanY / 8f)).toInt().coerceIn(0, grid - 1)
+                    for (c in 0 until 8) {
+                        val gx = (minGx + (c + 0.5f) * (spanX / 8f)).toInt().coerceIn(0, grid - 1)
+                        val v = lum[gy][gx]
+                        if ((r + c) % 2 == 0) lightSum += v else darkSum += v
+                    }
+                }
+                checkerContrast = abs(lightSum / 32 - darkSum / 32)
+            }
+
+            val isValid = isGeometryValid && checkerContrast >= 12
 
             val viewWidth = previewView.width.toFloat().coerceAtLeast(1f)
             val viewHeight = previewView.height.toFloat().coerceAtLeast(1f)
@@ -166,7 +200,7 @@ class LiveCameraView @JvmOverloads constructor(
 
             val eventMap: WritableMap = Arguments.createMap()
             eventMap.putBoolean("isBoardFound", isValid)
-            eventMap.putDouble("confidence", if (isValid) 0.92 else 0.50)
+            eventMap.putDouble("confidence", if (isValid) 0.96 else 0.20)
 
             val cornersMap: WritableMap = Arguments.createMap()
             cornersMap.putMap("topLeft", makePoint(leftFrac * viewWidth, topFrac * viewHeight))
@@ -174,6 +208,36 @@ class LiveCameraView @JvmOverloads constructor(
             cornersMap.putMap("bottomRight", makePoint(rightFrac * viewWidth, bottomFrac * viewHeight))
             cornersMap.putMap("bottomLeft", makePoint(leftFrac * viewWidth, bottomFrac * viewHeight))
             eventMap.putMap("corners", cornersMap)
+
+            // Sample 8x8 chessboard squares for real-time piece occupancy and color
+            val occArray: WritableArray = Arguments.createArray()
+            val lumArray: WritableArray = Arguments.createArray()
+
+            val startGx = if (isValid) minGx.toFloat() else (grid * 0.12f)
+            val spanGx = if (isValid) (maxGx - minGx + 1).toFloat() else (grid * 0.76f)
+            val startGy = if (isValid) minGy.toFloat() else (grid * 0.20f)
+            val spanGy = if (isValid) (maxGy - minGy + 1).toFloat() else (grid * 0.60f)
+
+            for (r in 0 until 8) {
+                val gy = (startGy + (r + 0.5f) * (spanGy / 8f)).toInt().coerceIn(0, grid - 1)
+                val gyTop = (startGy + (r + 0.15f) * (spanGy / 8f)).toInt().coerceIn(0, grid - 1)
+                val gyBot = (startGy + (r + 0.85f) * (spanGy / 8f)).toInt().coerceIn(0, grid - 1)
+                for (c in 0 until 8) {
+                    val gx = (startGx + (c + 0.5f) * (spanGx / 8f)).toInt().coerceIn(0, grid - 1)
+                    val gxL = (startGx + (c + 0.15f) * (spanGx / 8f)).toInt().coerceIn(0, grid - 1)
+                    val gxR = (startGx + (c + 0.85f) * (spanGx / 8f)).toInt().coerceIn(0, grid - 1)
+
+                    val centerVal = lum[gy][gx]
+                    val cornerVal = (lum[gyTop][gxL] + lum[gyTop][gxR] + lum[gyBot][gxL] + lum[gyBot][gxR]) / 4
+                    val contrast = abs(centerVal - cornerVal)
+
+                    val isOcc = contrast > 18
+                    occArray.pushInt(if (isOcc) 1 else 0)
+                    lumArray.pushInt(centerVal)
+                }
+            }
+            eventMap.putArray("occupancy", occArray)
+            eventMap.putArray("luminance", lumArray)
 
             sendEvent("onBoardStream", eventMap)
         } catch (e: Exception) {

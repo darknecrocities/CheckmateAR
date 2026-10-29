@@ -54,6 +54,7 @@ jest.mock('react-native', () => {
     View: (props: any) => React.createElement('div', props),
     Text: (props: any) => React.createElement('span', props),
     TouchableOpacity: (props: any) => React.createElement('button', props),
+    Pressable: (props: any) => React.createElement('button', props),
     StyleSheet: {
       create: (styles: any) => styles,
       absoluteFill: {},
@@ -75,6 +76,7 @@ jest.mock('react-native', () => {
     Animated: {
       Value: MockAnimatedValue,
       View: (props: any) => React.createElement('div', props),
+      createAnimatedComponent: (comp: any) => comp,
       spring: jest.fn(() => createAnim()),
       timing: jest.fn(() => createAnim()),
       parallel: jest.fn(() => createAnim()),
