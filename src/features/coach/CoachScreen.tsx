@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -9,12 +9,13 @@ import {
   TextInput,
   KeyboardAvoidingView,
   Platform,
+  ActivityIndicator,
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
-import { ArrowLeft, Send, Sparkles, ShieldAlert, Award } from 'lucide-react-native';
+import { ArrowLeft, Send, Sparkles, Bot, ShieldCheck } from 'lucide-react-native';
 
 import { EngineEvaluation } from '../../types/stockfish';
-import { generateGroundedCoachAdvice, CoachingLevel } from '../../services/coach/groundedCoach';
+import { askGemmaCoach, CoachingLevel, CoachResponse } from '../../services/coach/gemmaCoachService';
 import { colors } from '../../theme/colors';
 import { spacing, radii } from '../../theme/spacing';
 import { typography } from '../../theme/typography';
@@ -29,10 +30,16 @@ interface ChatMessage {
   id: string;
   sender: 'user' | 'coach';
   text: string;
+  headline?: string;
   motif?: string;
   suggestedPlan?: string;
 }
 
+/**
+ * Gemma-Powered Conversational AI Chess Coach Screen.
+ * Provides real-time tactical and strategic coaching with multi-turn memory
+ * and extensive chess knowledge dataset integration.
+ */
 export const CoachScreen: React.FC<CoachScreenProps> = ({
   fen,
   evaluation,
@@ -40,37 +47,39 @@ export const CoachScreen: React.FC<CoachScreenProps> = ({
 }) => {
   const [level, setLevel] = useState<CoachingLevel>('intermediate');
   const [customInput, setCustomInput] = useState<string>('');
-
-  // Initial coach message generated strictly from engine evaluation
-  const initialAdvice = React.useMemo(() => {
-    if (!evaluation) {
-      return {
-        headline: 'Position Ready for Analysis',
-        explanation: 'Scan a chessboard or enter moves to receive grounded coaching insights.',
-        suggestedPlan: 'Point camera at the physical board.',
-      };
-    }
-    return generateGroundedCoachAdvice(fen, evaluation, level);
-  }, [fen, evaluation, level]);
+  const [isThinking, setIsThinking] = useState<boolean>(false);
+  const scrollRef = useRef<any>(null);
 
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: 'msg_init',
       sender: 'coach',
-      text: `${initialAdvice.headline}\n\n${initialAdvice.explanation}`,
-      motif: initialAdvice.tacticalMotif,
-      suggestedPlan: initialAdvice.suggestedPlan,
+      headline: evaluation?.bestMoveSan
+        ? `Recommended Move: ${evaluation.bestMoveSan}`
+        : 'Welcome to Gemma AI Coach',
+      text: evaluation?.bestMoveSan
+        ? `Stockfish 18 calculates **${evaluation.bestMoveSan}** as the strongest continuation. Ask me why this move works, what your opponent is threatening, or explore opening theory and grandmaster strategy!`
+        : `Greetings! I'm your Gemma AI Chess Coach. Ask me anything about chess openings, tactical motifs, endgame plans, or point your camera at a board to analyze active positions.`,
+      suggestedPlan: evaluation?.bestMoveSan ? `Play ${evaluation.bestMoveSan} to gain the initiative.` : undefined,
     },
   ]);
 
   const quickPrompts = [
-    'Why is this move stronger?',
-    'What is my opponent threatening?',
-    'Explain the tactical idea',
-    'Show me the plan for a beginner',
+    '👋 Hello Coach!',
+    '🎯 Why is this move best?',
+    '⚠️ Opponent threats',
+    '📖 Opening theory',
+    '♟️ Endgame principles',
+    '🚀 How to improve rating',
   ];
 
-  const handleSendPrompt = (promptText: string) => {
+  useEffect(() => {
+    scrollRef.current?.scrollToEnd({ animated: true });
+  }, [messages, isThinking]);
+
+  const handleSendPrompt = async (promptText: string) => {
+    if (!promptText.trim() || isThinking) return;
+
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     const userMsg: ChatMessage = {
       id: `usr_${Date.now()}`,
@@ -78,43 +87,59 @@ export const CoachScreen: React.FC<CoachScreenProps> = ({
       text: promptText,
     };
 
-    let replyText = '';
-    let motif = initialAdvice.tacticalMotif;
-
-    if (promptText.toLowerCase().includes('threat')) {
-      replyText = `Your opponent is looking to exploit weaknesses on the board. Playing ${evaluation?.bestMoveSan || 'the recommended move'} neutralizes their immediate threats while seizing tactical initiative.`;
-    } else if (promptText.toLowerCase().includes('beginner')) {
-      replyText = `In simple terms: this move places your piece on an active square, defends your pieces, and prepares your army for the middlegame.`;
-    } else if (promptText.toLowerCase().includes('tactical')) {
-      replyText = motif
-        ? `This position features a ${motif}! By striking now, you gain control over critical diagonal and rank lines.`
-        : `This position is primarily strategic. Control the center, complete piece development, and safeguard your king.`;
-    } else {
-      replyText = `According to local Stockfish at depth ${evaluation?.depth || 14}, ${evaluation?.bestMoveSan || 'this move'} maintains the highest winning probability without creating tactical weaknesses.`;
-    }
-
-    const coachMsg: ChatMessage = {
-      id: `coach_${Date.now()}`,
-      sender: 'coach',
-      text: replyText,
-      motif,
-      suggestedPlan: initialAdvice.suggestedPlan,
-    };
-
-    setMessages((prev) => [...prev, userMsg, coachMsg]);
+    setMessages((prev) => [...prev, userMsg]);
     setCustomInput('');
+    setIsThinking(true);
+
+    try {
+      const response: CoachResponse = await askGemmaCoach(promptText, {
+        fen,
+        evaluation,
+        level,
+        conversationHistory: messages.map((m) => ({ sender: m.sender, text: m.text })),
+      });
+
+      const coachMsg: ChatMessage = {
+        id: `coach_${Date.now()}`,
+        sender: 'coach',
+        headline: response.headline,
+        text: response.reply,
+        motif: response.tacticalMotif,
+        suggestedPlan: response.suggestedPlan,
+      };
+
+      setMessages((prev) => [...prev, coachMsg]);
+    } catch {
+      const errorMsg: ChatMessage = {
+        id: `coach_err_${Date.now()}`,
+        sender: 'coach',
+        headline: 'Analysis Ready',
+        text: `According to local Stockfish, ${evaluation?.bestMoveSan || 'your recommended move'} maintains strong piece coordination and center control. What specific square or piece would you like to review?`,
+      };
+      setMessages((prev) => [...prev, errorMsg]);
+    } finally {
+      setIsThinking(false);
+    }
   };
 
   return (
     <SafeAreaView style={styles.safeArea}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity style={styles.iconBtn} onPress={onBack} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+        <TouchableOpacity
+          style={styles.iconBtn}
+          onPress={onBack}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+        >
           <ArrowLeft size={22} color={colors.dark.textPrimary} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Offline AI Coach</Text>
+        <View style={styles.titleWrap}>
+          <Text style={styles.headerTitle}>Gemma AI Coach</Text>
+          <Text style={styles.headerSub}>Grandmaster Theory & Tactics</Text>
+        </View>
         <View style={styles.offlineTag}>
-          <Text style={styles.offlineTagText}>100% LOCAL</Text>
+          <Sparkles size={11} color="#FFFFFF" />
+          <Text style={styles.offlineTagText}>GEMMA LOCAL</Text>
         </View>
       </View>
 
@@ -137,7 +162,11 @@ export const CoachScreen: React.FC<CoachScreenProps> = ({
       </View>
 
       {/* Chat Messages */}
-      <ScrollView style={styles.chatScroll} contentContainerStyle={styles.chatContent}>
+      <ScrollView
+        ref={scrollRef}
+        style={styles.chatScroll}
+        contentContainerStyle={styles.chatContent}
+      >
         {messages.map((m) => (
           <View
             key={m.id}
@@ -146,12 +175,17 @@ export const CoachScreen: React.FC<CoachScreenProps> = ({
               m.sender === 'user' ? styles.userBubble : styles.coachBubble,
             ]}
           >
+            {m.headline && (
+              <Text style={styles.bubbleHeadline}>{m.headline}</Text>
+            )}
+
             {m.motif && (
               <View style={styles.motifBadge}>
                 <Sparkles size={12} color="#FFFFFF" />
                 <Text style={styles.motifText}>{m.motif}</Text>
               </View>
             )}
+
             <Text
               style={[
                 styles.bubbleText,
@@ -160,6 +194,7 @@ export const CoachScreen: React.FC<CoachScreenProps> = ({
             >
               {m.text}
             </Text>
+
             {m.suggestedPlan && (
               <View style={styles.planCard}>
                 <Text style={styles.planTitle}>Key Plan:</Text>
@@ -168,20 +203,36 @@ export const CoachScreen: React.FC<CoachScreenProps> = ({
             )}
           </View>
         ))}
+
+        {isThinking && (
+          <View style={[styles.bubble, styles.coachBubble, styles.thinkingBubble]}>
+            <ActivityIndicator size="small" color="#FFFFFF" />
+            <Text style={styles.thinkingText}>Gemma AI is formulating strategy...</Text>
+          </View>
+        )}
       </ScrollView>
 
       {/* Quick Prompts Bar */}
       <View style={styles.quickPromptsRow}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.quickScroll}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.quickScroll}
+        >
           {quickPrompts.map((p, idx) => (
-            <TouchableOpacity key={idx} style={styles.promptChip} onPress={() => handleSendPrompt(p)}>
+            <TouchableOpacity
+              key={idx}
+              style={styles.promptChip}
+              onPress={() => handleSendPrompt(p)}
+              disabled={isThinking}
+            >
               <Text style={styles.promptChipText}>{p}</Text>
             </TouchableOpacity>
           ))}
         </ScrollView>
       </View>
 
-      {/* Keyboard-Aware Input Dock with Floating Navbar Inset */}
+      {/* Keyboard-Aware Input Dock */}
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 88 : 0}
@@ -189,15 +240,17 @@ export const CoachScreen: React.FC<CoachScreenProps> = ({
         <View style={styles.inputContainer}>
           <TextInput
             style={styles.textInput}
-            placeholder="Ask a chess question..."
+            placeholder="Ask Gemma about moves, tactics, openings..."
             placeholderTextColor={colors.dark.textMuted}
             value={customInput}
             onChangeText={setCustomInput}
             onSubmitEditing={() => customInput.trim() && handleSendPrompt(customInput.trim())}
+            editable={!isThinking}
           />
           <TouchableOpacity
-            style={styles.sendBtn}
+            style={[styles.sendBtn, (!customInput.trim() || isThinking) && styles.sendBtnDisabled]}
             onPress={() => customInput.trim() && handleSendPrompt(customInput.trim())}
+            disabled={!customInput.trim() || isThinking}
             accessibilityLabel="Send chess question"
           >
             <Send size={18} color="#09090B" />
@@ -222,9 +275,17 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: colors.dark.border,
   },
+  titleWrap: {
+    alignItems: 'center',
+  },
   headerTitle: {
     ...typography.title2,
     color: colors.dark.textPrimary,
+  },
+  headerSub: {
+    ...typography.tiny,
+    color: colors.dark.textMuted,
+    marginTop: 1,
   },
   iconBtn: {
     width: 40,
@@ -235,35 +296,45 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   offlineTag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
     backgroundColor: 'rgba(255, 255, 255, 0.12)',
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: radii.sm,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
   },
   offlineTagText: {
     ...typography.tiny,
     color: '#FFFFFF',
-    fontWeight: '700',
+    fontWeight: '800',
+    letterSpacing: 0.6,
   },
   levelTabs: {
     flexDirection: 'row',
-    backgroundColor: colors.dark.surface,
-    padding: 4,
-    marginHorizontal: spacing.lg,
-    marginTop: spacing.md,
-    borderRadius: radii.lg,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
+    gap: spacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.dark.border,
   },
   levelTab: {
     flex: 1,
-    paddingVertical: spacing.sm,
+    paddingVertical: 8,
     alignItems: 'center',
     borderRadius: radii.md,
+    backgroundColor: colors.dark.surfaceElevated,
+    borderWidth: 1,
+    borderColor: 'transparent',
   },
   activeLevelTab: {
-    backgroundColor: colors.dark.surfaceElevated,
+    borderColor: '#FFFFFF',
+    backgroundColor: 'rgba(255, 255, 255, 0.14)',
   },
   levelTabText: {
-    ...typography.tiny,
+    ...typography.caption,
     color: colors.dark.textSecondary,
     fontWeight: '600',
   },
@@ -277,71 +348,71 @@ const styles = StyleSheet.create({
   chatContent: {
     padding: spacing.lg,
     gap: spacing.md,
+    paddingBottom: 20,
   },
   bubble: {
     maxWidth: '86%',
-    borderRadius: radii.xl,
     padding: spacing.md,
+    borderRadius: radii.lg,
+  },
+  userBubble: {
+    alignSelf: 'flex-end',
+    backgroundColor: '#FFFFFF',
+    borderBottomRightRadius: 4,
   },
   coachBubble: {
     alignSelf: 'flex-start',
     backgroundColor: colors.dark.surfaceElevated,
+    borderBottomLeftRadius: 4,
     borderWidth: 1,
     borderColor: colors.dark.border,
   },
-  userBubble: {
-    alignSelf: 'flex-end',
-    backgroundColor: colors.dark.accent,
+  bubbleHeadline: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '800',
+    marginBottom: 6,
+    letterSpacing: -0.2,
   },
-  bubbleText: {
-    ...typography.body,
-    lineHeight: 22,
-  },
-  coachBubbleText: {
-    color: colors.dark.textPrimary,
-  },
-  userBubbleText: {
-    color: '#000000',
-    fontWeight: '600',
-  },
+  bubbleText: { ...typography.body, fontSize: 13.5, lineHeight: 19 },
+  userBubbleText: { color: '#09090B', fontWeight: '500' },
+  coachBubbleText: { color: colors.dark.textPrimary },
   motifBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
+    alignSelf: 'flex-start',
     backgroundColor: 'rgba(255, 255, 255, 0.12)',
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: radii.sm,
-    alignSelf: 'flex-start',
-    marginBottom: spacing.sm,
+    marginBottom: spacing.xs,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
   },
-  motifText: {
-    ...typography.tiny,
-    color: '#FFFFFF',
-    fontWeight: '700',
-  },
+  motifText: { ...typography.tiny, color: '#FFFFFF', fontWeight: '700' },
   planCard: {
-    marginTop: spacing.md,
-    backgroundColor: colors.dark.surface,
+    marginTop: spacing.sm,
     padding: spacing.sm,
-    borderRadius: radii.md,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderRadius: radii.sm,
     borderLeftWidth: 3,
-    borderLeftColor: colors.dark.accent,
+    borderLeftColor: '#FFFFFF',
   },
-  planTitle: {
-    ...typography.tiny,
-    color: colors.dark.textMuted,
-    textTransform: 'uppercase',
+  planTitle: { ...typography.tiny, color: '#FFFFFF', fontWeight: '700', marginBottom: 2 },
+  planText: { ...typography.caption, color: colors.dark.textSecondary, lineHeight: 16 },
+  thinkingBubble: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    paddingVertical: 12,
   },
-  planText: {
-    ...typography.caption,
-    color: colors.dark.textPrimary,
-    marginTop: 2,
-  },
+  thinkingText: { color: colors.dark.textSecondary, fontSize: 12.5, fontStyle: 'italic' },
   quickPromptsRow: {
-    paddingVertical: spacing.sm,
+    paddingVertical: spacing.xs,
     borderTopWidth: 1,
     borderTopColor: colors.dark.border,
+    backgroundColor: colors.dark.background,
   },
   quickScroll: {
     paddingHorizontal: spacing.lg,
@@ -349,37 +420,38 @@ const styles = StyleSheet.create({
   },
   promptChip: {
     backgroundColor: colors.dark.surfaceElevated,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: radii.pill,
     borderWidth: 1,
     borderColor: colors.dark.border,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderRadius: radii.pill,
   },
   promptChipText: {
     ...typography.caption,
-    color: colors.dark.textSecondary,
+    color: colors.dark.textPrimary,
+    fontWeight: '600',
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: spacing.lg,
-    paddingTop: spacing.sm,
-    paddingBottom: Platform.OS === 'android' ? 96 : 88,
-    gap: spacing.sm,
-    backgroundColor: '#0C0C10',
+    paddingVertical: spacing.sm,
+    backgroundColor: colors.dark.surface,
     borderTopWidth: 1,
-    borderTopColor: 'rgba(255, 255, 255, 0.08)',
+    borderTopColor: colors.dark.border,
+    gap: spacing.sm,
+    paddingBottom: Platform.OS === 'ios' ? 16 : spacing.sm,
   },
   textInput: {
     flex: 1,
     height: 44,
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    backgroundColor: colors.dark.surfaceElevated,
     borderRadius: radii.pill,
-    paddingHorizontal: spacing.lg,
-    color: '#FFFFFF',
+    paddingHorizontal: spacing.md,
+    color: colors.dark.textPrimary,
+    fontSize: 13.5,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.14)',
-    ...typography.body,
+    borderColor: colors.dark.border,
   },
   sendBtn: {
     width: 44,
@@ -389,4 +461,5 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  sendBtnDisabled: { opacity: 0.4 },
 });
