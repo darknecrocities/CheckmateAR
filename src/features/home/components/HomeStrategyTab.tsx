@@ -167,7 +167,7 @@ export const HomeStrategyTab: React.FC<HomeStrategyTabProps> = ({
                   </View>
 
                   <View style={styles.arrowPredBadge}>
-                    <ArrowUpRight size={10} color="#10B981" />
+                    <ArrowUpRight size={10} color="#FFFFFF" />
                     <Text style={styles.arrowPredText}>{arrowTag}</Text>
                   </View>
 
@@ -178,11 +178,11 @@ export const HomeStrategyTab: React.FC<HomeStrategyTabProps> = ({
                 <Text style={styles.strategyMoves}>{item.moves}</Text>
 
                 <View style={styles.analyzeActionRow}>
-                  <PlayCircle size={13} color="#10B981" />
+                  <PlayCircle size={13} color="#FFFFFF" />
                   <Text style={styles.analyzeActionText}>
                     Play Move Prediction
                   </Text>
-                  <ChevronRight size={14} color="#10B981" />
+                  <ChevronRight size={14} color="#FFFFFF" />
                 </View>
               </View>
 
@@ -300,8 +300,8 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255, 255, 255, 0.08)',
   },
   activeCategoryPill: {
-    backgroundColor: '#EAF7F0',
-    borderColor: '#EAF7F0',
+    backgroundColor: '#FFFFFF',
+    borderColor: '#FFFFFF',
   },
   categoryPillText: {
     color: '#A1A1AA',
@@ -348,13 +348,13 @@ const styles = StyleSheet.create({
     gap: 2,
     paddingHorizontal: 6,
     paddingVertical: 2.5,
-    backgroundColor: 'rgba(16, 185, 129, 0.16)',
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
     borderRadius: radii.sm,
     borderWidth: 0.8,
-    borderColor: 'rgba(16, 185, 129, 0.4)',
+    borderColor: 'rgba(255, 255, 255, 0.28)',
   },
   arrowPredText: {
-    color: '#10B981',
+    color: '#FFFFFF',
     fontSize: 9,
     fontWeight: '800',
   },
@@ -382,7 +382,7 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   analyzeActionText: {
-    color: '#10B981',
+    color: '#FFFFFF',
     fontSize: 11,
     fontWeight: '700',
   },

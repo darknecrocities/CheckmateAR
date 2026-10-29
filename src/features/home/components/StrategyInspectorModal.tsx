@@ -232,7 +232,7 @@ export const StrategyInspectorModal: React.FC<StrategyInspectorModalProps> = ({
             {/* Tactical Breakdown Card */}
             <LiquidGlassCard variant="spec" causticPosition="right" style={styles.goalCard}>
               <View style={styles.goalHeader}>
-                <Award size={14} color="#10B981" />
+                <Award size={14} color="#FFFFFF" />
                 <Text style={styles.goalTitle}>TACTICAL OBJECTIVE • {strategy.masterWinRate}</Text>
               </View>
               <Text style={styles.goalBody}>{strategy.tacticalGoal}</Text>
@@ -336,12 +336,12 @@ const styles = StyleSheet.create({
   keySquareBadge: {
     paddingHorizontal: 7,
     paddingVertical: 3,
-    backgroundColor: 'rgba(16, 185, 129, 0.18)',
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
     borderRadius: radii.sm,
     borderWidth: 1,
-    borderColor: 'rgba(16, 185, 129, 0.4)',
+    borderColor: 'rgba(255, 255, 255, 0.28)',
   },
-  keySquareText: { color: '#10B981', fontSize: 9, fontWeight: '800' },
+  keySquareText: { color: '#FFFFFF', fontSize: 9, fontWeight: '800' },
   closeBtn: {
     width: 34,
     height: 34,
@@ -412,7 +412,7 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   goalTitle: {
-    color: '#10B981',
+    color: '#FFFFFF',
     fontSize: 10,
     fontWeight: '800',
     letterSpacing: 0.5,

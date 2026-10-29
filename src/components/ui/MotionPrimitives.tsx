@@ -6,6 +6,7 @@ import {
   StyleProp,
   ViewStyle,
   StyleSheet,
+  AccessibilityRole,
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { motion } from '../../theme/motion';
@@ -31,6 +32,7 @@ export interface KineticPressableProps {
   enablePulse?: boolean;
   onPressStateChange?: (pressed: boolean) => void;
   accessibilityLabel?: string;
+  accessibilityRole?: AccessibilityRole;
   testID?: string;
   disabled?: boolean;
 }
@@ -50,6 +52,7 @@ export const KineticPressable: React.FC<KineticPressableProps> = ({
   enablePulse = false,
   onPressStateChange,
   accessibilityLabel,
+  accessibilityRole,
   testID,
   disabled = false,
 }) => {
@@ -171,6 +174,7 @@ export const KineticPressable: React.FC<KineticPressableProps> = ({
         onPress={onPress}
         hitSlop={8}
         accessibilityLabel={accessibilityLabel}
+        accessibilityRole={accessibilityRole}
         testID={testID}
         style={[
           style,

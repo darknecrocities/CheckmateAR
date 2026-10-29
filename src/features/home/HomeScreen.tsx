@@ -10,11 +10,13 @@ import {
   Dimensions,
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
+import { Box, Sparkles } from 'lucide-react-native';
 
 import { HomeStartTab } from './components/HomeStartTab';
 import { HomeStrategyTab } from './components/HomeStrategyTab';
 import { HomeVaultTab } from './components/HomeVaultTab';
-import { GMWisdomHeader } from '../../components/navigation/GMWisdomHeader';
+import { AnimatedGMWisdomBanner } from '../../components/navigation/AnimatedGMWisdomBanner';
+import { CheckmateLogo } from '../../components/branding/CheckmateLogo';
 import { ChessMascotBackground } from '../../components/mascot/ChessMascotBackground';
 import { KineticPressable } from '../../components/ui/MotionPrimitives';
 import { StrategyItem } from '../../services/chess/strategyLibrary';
@@ -65,8 +67,47 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
       {/* 3D Chess Mascot Background (Transparent watermark behind cards) */}
       <ChessMascotBackground />
 
-      {/* Textured GM Motivational Wisdom Header */}
-      <GMWisdomHeader onOpenMascot={onOpenMascot} onStartScan={() => onStartScan()} />
+      {/* Borderless Floating Brand Row (No traditional boxy appbar) */}
+      <View style={styles.floatingTopBar}>
+        <View style={styles.brandGroup}>
+          <CheckmateLogo size={24} variant="standalone" />
+          <View style={styles.titleRow}>
+            <Text style={styles.brandTitle}>CHECKMATE</Text>
+            <View style={styles.editionBadge}>
+              <Text style={styles.editionText}>AR</Text>
+            </View>
+          </View>
+        </View>
+
+        <View style={styles.topActionsGroup}>
+          {/* 3D Queen Mascot Studio Trigger */}
+          <KineticPressable
+            style={styles.mascotTriggerPill}
+            scaleTo={0.92}
+            hapticStyle="light"
+            onPress={onOpenMascot}
+            accessibilityLabel="Open 3D Queen Mascot Studio"
+          >
+            <Box size={13} color="#FFFFFF" />
+            <Text style={styles.mascotTriggerText}>MASCOT</Text>
+          </KineticPressable>
+
+          {/* Instant AR Scan Action */}
+          <KineticPressable
+            style={styles.scanQuickTrigger}
+            scaleTo={0.92}
+            hapticStyle="medium"
+            onPress={() => onStartScan()}
+            accessibilityLabel="Instant AR Board Scan"
+          >
+            <Sparkles size={13} color="#09090B" />
+            <Text style={styles.scanQuickText}>SCAN</Text>
+          </KineticPressable>
+        </View>
+      </View>
+
+      {/* Kinetic Animated Grandmaster Wisdom Banner (Directly on top of 3-pill tabs) */}
+      <AnimatedGMWisdomBanner />
 
       {/* Glassmorphic 3-Pill Switcher: [ Start ] | [ Strategy ] | [ Vault ] */}
       <View style={styles.segmentedContainer}>
@@ -150,10 +191,86 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#000000',
   },
+  floatingTopBar: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.xs,
+    paddingBottom: spacing.sm,
+    zIndex: 10,
+  },
+  brandGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+  },
+  brandTitle: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '900',
+    letterSpacing: 1.2,
+  },
+  editionBadge: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 4,
+    paddingHorizontal: 4,
+    paddingVertical: 1,
+  },
+  editionText: {
+    color: '#09090B',
+    fontSize: 9.5,
+    fontWeight: '900',
+    letterSpacing: 0.5,
+  },
+  topActionsGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  mascotTriggerPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 9,
+    paddingVertical: 6,
+    borderRadius: radii.pill,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.16)',
+  },
+  mascotTriggerText: {
+    color: '#D4D4D8',
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+  },
+  scanQuickTrigger: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 11,
+    paddingVertical: 6,
+    borderRadius: radii.pill,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#FFFFFF',
+  },
+  scanQuickText: {
+    color: '#09090B',
+    fontSize: 10.5,
+    fontWeight: '900',
+    letterSpacing: 0.5,
+  },
   segmentedContainer: {
     flexDirection: 'row',
     marginHorizontal: spacing.md,
-    marginTop: spacing.xs,
+    marginTop: 2,
     marginBottom: spacing.sm,
     backgroundColor: 'rgba(18, 18, 22, 0.85)',
     borderRadius: radii.pill,
@@ -168,7 +285,7 @@ const styles = StyleSheet.create({
     top: 3.5,
     bottom: 3.5,
     left: 3.5,
-    backgroundColor: '#EAF7F0',
+    backgroundColor: '#FFFFFF',
     borderRadius: radii.pill,
   },
   segmentBtn: {
@@ -193,7 +310,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: spacing.md,
-    paddingTop: 6,
+    paddingTop: 4,
     paddingBottom: 118,
   },
 });
