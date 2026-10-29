@@ -28,7 +28,7 @@ export type AppRoute =
   | 'trainer';
 
 export default function AppRoot() {
-  const [currentRoute, setCurrentRoute] = useState<AppRoute>('home');
+  const [currentRoute, setCurrentRoute] = useState<AppRoute>('welcome');
   const [activeFen, setActiveFen] = useState<string>(
     'r1bqk2r/pppp1ppp/2n2n2/2b1p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 4 4'
   );
@@ -166,7 +166,10 @@ export default function AppRoot() {
         )}
 
         {currentRoute === 'settings' && (
-          <SettingsScreen onBack={() => setCurrentRoute('home')} />
+          <SettingsScreen
+            onBack={() => setCurrentRoute('home')}
+            onOpenWelcome={() => setCurrentRoute('welcome')}
+          />
         )}
       </KineticRouteTransition>
 
