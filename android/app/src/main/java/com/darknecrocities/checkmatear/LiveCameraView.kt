@@ -16,6 +16,7 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleOwner
 import com.facebook.react.bridge.Arguments
 import com.facebook.react.bridge.ReactContext
+import com.facebook.react.bridge.WritableArray
 import com.facebook.react.bridge.WritableMap
 import com.facebook.react.modules.core.DeviceEventManagerModule
 import java.util.concurrent.ExecutorService
@@ -185,6 +186,36 @@ class LiveCameraView @JvmOverloads constructor(
             cornersMap.putMap("bottomRight", makePoint(rightFrac * viewWidth, bottomFrac * viewHeight))
             cornersMap.putMap("bottomLeft", makePoint(leftFrac * viewWidth, bottomFrac * viewHeight))
             eventMap.putMap("corners", cornersMap)
+
+            // Sample 8x8 chessboard squares for real-time piece occupancy and color
+            val occArray: WritableArray = Arguments.createArray()
+            val lumArray: WritableArray = Arguments.createArray()
+
+            val startGx = if (isValid) minGx.toFloat() else (grid * 0.12f)
+            val spanGx = if (isValid) (maxGx - minGx + 1).toFloat() else (grid * 0.76f)
+            val startGy = if (isValid) minGy.toFloat() else (grid * 0.20f)
+            val spanGy = if (isValid) (maxGy - minGy + 1).toFloat() else (grid * 0.60f)
+
+            for (r in 0 until 8) {
+                val gy = (startGy + (r + 0.5f) * (spanGy / 8f)).toInt().coerceIn(0, grid - 1)
+                val gyTop = (startGy + (r + 0.15f) * (spanGy / 8f)).toInt().coerceIn(0, grid - 1)
+                val gyBot = (startGy + (r + 0.85f) * (spanGy / 8f)).toInt().coerceIn(0, grid - 1)
+                for (c in 0 until 8) {
+                    val gx = (startGx + (c + 0.5f) * (spanGx / 8f)).toInt().coerceIn(0, grid - 1)
+                    val gxL = (startGx + (c + 0.15f) * (spanGx / 8f)).toInt().coerceIn(0, grid - 1)
+                    val gxR = (startGx + (c + 0.85f) * (spanGx / 8f)).toInt().coerceIn(0, grid - 1)
+
+                    val centerVal = lum[gy][gx]
+                    val cornerVal = (lum[gyTop][gxL] + lum[gyTop][gxR] + lum[gyBot][gxL] + lum[gyBot][gxR]) / 4
+                    val contrast = abs(centerVal - cornerVal)
+
+                    val isOcc = contrast > 18
+                    occArray.pushInt(if (isOcc) 1 else 0)
+                    lumArray.pushInt(centerVal)
+                }
+            }
+            eventMap.putArray("occupancy", occArray)
+            eventMap.putArray("luminance", lumArray)
 
             sendEvent("onBoardStream", eventMap)
         } catch (e: Exception) {

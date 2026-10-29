@@ -23,7 +23,7 @@ export const MascotScreen: React.FC<MascotScreenProps> = ({ onBack, onStartAR })
           <ArrowLeft size={20} color="#FFFFFF" />
         </KineticPressable>
         <View style={styles.titleWrap}>
-          <Text style={styles.headerTitle}>Grandmaster Knight</Text>
+          <Text style={styles.headerTitle}>Grandmaster Queen</Text>
           <Text style={styles.headerSub}>Official 3D AR Mascot</Text>
         </View>
         <KineticPressable style={styles.iconBtn} scaleTo={0.88} onPress={() => {}} accessibilityLabel="Options">
@@ -41,32 +41,32 @@ export const MascotScreen: React.FC<MascotScreenProps> = ({ onBack, onStartAR })
           <LiquidGlassCard variant="spec" causticPosition="corner" staggerIndex={1} style={styles.specCard}>
             <Layers size={18} color="#D4D4D4" />
             <Text style={styles.specLabel}>Height Bounds</Text>
-            <Text style={styles.specValue}>150 MM</Text>
+            <Text style={styles.specValue}>180 MM</Text>
           </LiquidGlassCard>
           <LiquidGlassCard variant="spec" causticPosition="corner" staggerIndex={2} style={styles.specCard}>
             <Zap size={18} color="#D4D4D4" />
             <Text style={styles.specLabel}>Pedestal Diameter</Text>
-            <Text style={styles.specValue}>70 MM</Text>
+            <Text style={styles.specValue}>72 MM</Text>
           </LiquidGlassCard>
           <LiquidGlassCard variant="spec" causticPosition="corner" staggerIndex={3} style={styles.specCard}>
             <Shield size={18} color="#D4D4D4" />
             <Text style={styles.specLabel}>Tactical Role</Text>
-            <Text style={styles.specValue}>Fork & Battery</Text>
+            <Text style={styles.specValue}>Universal Dominance</Text>
           </LiquidGlassCard>
           <LiquidGlassCard variant="spec" causticPosition="corner" staggerIndex={4} style={styles.specCard}>
             <Sparkles size={18} color="#D4D4D4" />
             <Text style={styles.specLabel}>Material Shading</Text>
-            <Text style={styles.specValue}>Obsidian Ceramic</Text>
+            <Text style={styles.specValue}>Obsidian Platinum</Text>
           </LiquidGlassCard>
         </View>
 
         {/* Tactical Mascot Bio with Liquid Meniscus Sheen */}
         <LiquidGlassCard variant="default" causticPosition="right" staggerIndex={5} style={styles.bioCard}>
-          <Text style={styles.bioTitle}>About The Knight</Text>
+          <Text style={styles.bioTitle}>About The Queen</Text>
           <Text style={styles.bioText}>
-            The only piece on the board capable of jumping over friendly and hostile lines.
-            Sculpted with a sharp muzzle and flared crest, The Grandmaster Knight embodies the
-            unconventional tactical strikes that define CheckmateAR's real-time engine analysis.
+            The sovereign ruler of the 64 squares, combining the orthogonal power of the Rook with
+            the diagonal razor precision of the Bishop. Sculpted with an 8-spire coronet and imperial
+            pearl apex, The Grandmaster Queen embodies absolute tactical superiority in CheckmateAR.
           </Text>
         </LiquidGlassCard>
       </ScrollView>

@@ -60,21 +60,21 @@ export const ARFloatingCommandDock: React.FC<ARFloatingCommandDockProps> = ({
       {/* Non-Overlapping Horizontal AR Command Bar */}
       <View style={styles.floatingToolbar}>
         <TouchableOpacity
-          style={[styles.toolPill, showBoardMask && styles.toolPillActiveBlue]}
+          style={[styles.toolPill, showBoardMask && styles.toolPillActiveWhite]}
           onPress={onToggleBoardMask}
           accessibilityLabel="Toggle Board Segmentation Mask"
         >
-          <Layers size={15} color="#FFFFFF" />
-          <Text style={styles.toolPillText}>Seg Mask</Text>
+          <Layers size={15} color={showBoardMask ? '#000000' : '#FFFFFF'} />
+          <Text style={[styles.toolPillText, showBoardMask && styles.toolPillTextActive]}>Seg Mask</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[styles.toolPill, showPieceBoxes && styles.toolPillActiveBlue]}
+          style={[styles.toolPill, showPieceBoxes && styles.toolPillActiveWhite]}
           onPress={onTogglePieceBoxes}
           accessibilityLabel="Toggle YOLO Piece Bounding Boxes"
         >
-          <Box size={15} color="#FFFFFF" />
-          <Text style={styles.toolPillText}>YOLO Boxes</Text>
+          <Box size={15} color={showPieceBoxes ? '#000000' : '#FFFFFF'} />
+          <Text style={[styles.toolPillText, showPieceBoxes && styles.toolPillTextActive]}>YOLO Boxes</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -180,13 +180,17 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.2)',
   },
-  toolPillActiveBlue: {
-    backgroundColor: 'rgba(37, 99, 235, 0.9)',
-    borderColor: '#60A5FA',
+  toolPillActiveWhite: {
+    backgroundColor: '#FFFFFF',
+    borderColor: '#FFFFFF',
   },
   toolPillText: {
     color: '#FFFFFF',
     fontSize: 10.5,
+    fontWeight: '800',
+  },
+  toolPillTextActive: {
+    color: '#000000',
     fontWeight: '800',
   },
   toolIconBtn: {
@@ -233,7 +237,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   highlightMove: {
-    color: '#60A5FA',
+    color: '#FFFFFF',
     fontWeight: '800',
   },
   drawerSub: {
@@ -272,7 +276,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   detailsBtn: {
-    backgroundColor: 'rgba(37, 99, 235, 0.9)',
+    backgroundColor: 'rgba(255, 255, 255, 0.16)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.35)',
     paddingHorizontal: 11,
     paddingVertical: 8,
     borderRadius: radii.md,

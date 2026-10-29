@@ -14,6 +14,8 @@ export interface BoardStreamData {
   corners: QuadPoints;
   isBoardFound: boolean;
   confidence: number;
+  occupancy?: number[];
+  luminance?: number[];
 }
 
 interface LiveStreamCameraProps {
@@ -52,6 +54,8 @@ export const LiveStreamCamera: React.FC<LiveStreamCameraProps> = ({
           },
           isBoardFound: Boolean(event.isBoardFound),
           confidence: typeof event.confidence === 'number' ? event.confidence : 0.8,
+          occupancy: Array.isArray(event.occupancy) ? event.occupancy : undefined,
+          luminance: Array.isArray(event.luminance) ? event.luminance : undefined,
         };
 
         onBoardStreamRef.current?.(streamData);

@@ -151,11 +151,11 @@ export const ChessBoard2D: React.FC<ChessBoard2DProps> = ({
 
             let bgColor = isDark ? colors.chess.darkSquare : colors.chess.lightSquare;
             if (isSelected) {
-              bgColor = 'rgba(59, 130, 246, 0.5)';
+              bgColor = 'rgba(255, 255, 255, 0.45)';
             } else if (sq === bestTo) {
-              bgColor = 'rgba(16, 185, 129, 0.36)';
+              bgColor = 'rgba(255, 255, 255, 0.32)';
             } else if (isHighlighted) {
-              bgColor = 'rgba(56, 189, 248, 0.28)';
+              bgColor = 'rgba(255, 255, 255, 0.20)';
             }
 
             return (

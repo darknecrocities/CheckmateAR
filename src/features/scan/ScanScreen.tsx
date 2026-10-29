@@ -14,6 +14,7 @@ import { CameraMotionTracker } from '../../services/vision/motionTracker';
 import { StockfishEngine } from '../../services/stockfish/stockfishEngine';
 import { formatEvaluationScore } from '../../services/stockfish/uciProtocol';
 import { CHESS_STRATEGY_DATABASE } from '../../services/chess/strategyLibrary';
+import { classifyGridToFen } from '../../services/vision/colorAgnosticClassifier';
 import { LiveStreamCamera, BoardStreamData } from '../../components/camera/LiveStreamCamera';
 import { ARPerspectiveBoard } from '../../components/ar/ARPerspectiveBoard';
 import { ARSegmentationOverlay } from '../../components/ar/ARSegmentationOverlay';
@@ -50,6 +51,8 @@ export const ScanScreen: React.FC<ScanScreenProps> = ({
 }) => {
   const [permission, requestPermission] = useCameraPermissions();
   const [isWhiteBottom, setIsWhiteBottom] = useState<boolean>(true);
+  const [playerSide, setPlayerSide] = useState<'white' | 'black'>('white');
+  const [showSideSelector, setShowSideSelector] = useState<boolean>(!initialFen);
   const [isFrozen, setIsFrozen] = useState<boolean>(false);
   const [isLocked, setIsLocked] = useState<boolean>(false);
   const [showBoardMask, setShowBoardMask] = useState<boolean>(true);
@@ -150,9 +153,25 @@ export const ScanScreen: React.FC<ScanScreenProps> = ({
         anchorCornersRef.current = smoothed;
         setCorners(smoothed);
         setBoardConfidence(Math.max(0.91, Math.min(0.99, streamData.confidence)));
+
+        // Real-time piece & color detection across physical or screen chessboards
+        if (streamData.occupancy && streamData.luminance) {
+          const classified = classifyGridToFen(
+            streamData.occupancy,
+            streamData.luminance,
+            isWhiteBottom,
+            currentFen
+          );
+          if (classified.isLegal && (classified.whiteCount > 0 || classified.blackCount > 0)) {
+            if (classified.fen !== currentFen) {
+              setCurrentFen(classified.fen);
+              setStatusMsg(`Live Board: ${classified.whiteCount}W / ${classified.blackCount}B Pieces`);
+            }
+          }
+        }
       }
     },
-    [isLocked, isFrozen]
+    [isLocked, isFrozen, isWhiteBottom, currentFen]
   );
 
   const handleCornerChange = (corner: keyof QuadPoints, newPoint: Point2D) => {
@@ -225,6 +244,22 @@ export const ScanScreen: React.FC<ScanScreenProps> = ({
     });
   };
 
+  const handleToggleSide = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
+    const nextSide = playerSide === 'white' ? 'black' : 'white';
+    setPlayerSide(nextSide);
+    setIsWhiteBottom(nextSide === 'white');
+    setStatusMsg(`Perspective flipped: Playing as ${nextSide.toUpperCase()}`);
+  };
+
+  const handleSelectSide = (side: 'white' | 'black') => {
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+    setPlayerSide(side);
+    setIsWhiteBottom(side === 'white');
+    setShowSideSelector(false);
+    setStatusMsg(`Playing as ${side.toUpperCase()} • Live AR Active`);
+  };
+
   const evalText = evaluation ? formatEvaluationScore(evaluation.scoreCp, evaluation.mateIn) : '+0.00';
 
   return (
@@ -278,6 +313,8 @@ export const ScanScreen: React.FC<ScanScreenProps> = ({
         isLocked={isLocked}
         boardConfidence={recognition.segmentation.confidence}
         pieceCount={recognition.pieceCount}
+        playerSide={playerSide}
+        onTogglePlayerSide={handleToggleSide}
         onBack={onBackToHome}
       />
 
@@ -323,6 +360,34 @@ export const ScanScreen: React.FC<ScanScreenProps> = ({
         onClose={() => setCorrectionSquare(null)}
         onConfirmPiece={handleConfirmPiece}
       />
+
+      {/* Interactive Playing Side Selector Modal (Asks user: White vs Black) */}
+      {showSideSelector && (
+        <View style={styles.sideSelectorBackdrop}>
+          <View style={styles.sideSelectorCard}>
+            <Text style={styles.sideSelectorTitle}>Which side are you playing?</Text>
+            <Text style={styles.sideSelectorSub}>
+              CheckmateAR orients live AR board coordinates and Stockfish best-move prediction to your side.
+            </Text>
+            <View style={styles.sideSelectorButtons}>
+              <TouchableOpacity
+                style={[styles.sideChoiceBtn, styles.sideChoiceWhite]}
+                onPress={() => handleSelectSide('white')}
+                activeOpacity={0.85}
+              >
+                <Text style={styles.sideChoiceWhiteText}>⚪ Play as White</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.sideChoiceBtn, styles.sideChoiceBlack]}
+                onPress={() => handleSelectSide('black')}
+                activeOpacity={0.85}
+              >
+                <Text style={styles.sideChoiceBlackText}>⚫ Play as Black</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      )}
     </View>
   );
 };
@@ -331,6 +396,66 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.dark.background,
+  },
+  sideSelectorBackdrop: {
+    ...StyleSheet.absoluteFill,
+    backgroundColor: 'rgba(0, 0, 0, 0.75)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: spacing.lg,
+    zIndex: 120,
+  },
+  sideSelectorCard: {
+    width: '100%',
+    maxWidth: 380,
+    backgroundColor: 'rgba(16, 16, 18, 0.96)',
+    borderRadius: radii.xl,
+    borderWidth: 1.2,
+    borderColor: 'rgba(255, 255, 255, 0.22)',
+    padding: spacing.xl,
+    alignItems: 'center',
+  },
+  sideSelectorTitle: {
+    ...typography.title1,
+    color: '#FFFFFF',
+    textAlign: 'center',
+    marginBottom: spacing.xs,
+  },
+  sideSelectorSub: {
+    ...typography.caption,
+    color: colors.dark.textSecondary,
+    textAlign: 'center',
+    lineHeight: 18,
+    marginBottom: spacing.lg,
+  },
+  sideSelectorButtons: {
+    width: '100%',
+    gap: spacing.sm,
+  },
+  sideChoiceBtn: {
+    width: '100%',
+    paddingVertical: 14,
+    borderRadius: radii.lg,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  sideChoiceWhite: {
+    backgroundColor: '#FFFFFF',
+  },
+  sideChoiceWhiteText: {
+    color: '#000000',
+    fontSize: 15,
+    fontWeight: '800',
+  },
+  sideChoiceBlack: {
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    borderWidth: 1.2,
+    borderColor: 'rgba(255, 255, 255, 0.35)',
+  },
+  sideChoiceBlackText: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '800',
   },
   cameraPlaceholder: {
     backgroundColor: '#09090B',

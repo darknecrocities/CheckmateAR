@@ -16,6 +16,7 @@ interface HomeStartTabProps {
   onOpenTrainer?: () => void;
   onOpenHistory?: () => void;
   onSwitchToStrategy?: () => void;
+  onSwitchToVault?: () => void;
 }
 
 export const HomeStartTab: React.FC<HomeStartTabProps> = ({
@@ -25,6 +26,7 @@ export const HomeStartTab: React.FC<HomeStartTabProps> = ({
   onOpenCoach,
   onOpenTrainer,
   onOpenHistory,
+  onSwitchToVault,
 }) => {
   return (
     <>
@@ -133,7 +135,7 @@ export const HomeStartTab: React.FC<HomeStartTabProps> = ({
             <Text style={styles.cardTitle}>3D Mascot</Text>
           </View>
           <View style={styles.pedestalPieceWrap} pointerEvents="none">
-            <ChessPieceArtwork piece="b" size={84} color="white" floatDelay={500} />
+            <ChessPieceArtwork piece="q" size={84} color="white" floatDelay={500} />
           </View>
         </LiquidGlassCard>
 
@@ -143,7 +145,7 @@ export const HomeStartTab: React.FC<HomeStartTabProps> = ({
           causticPosition="center"
           staggerIndex={6}
           style={styles.pedestalCard}
-          onPress={onOpenHistory ?? onOpenAnalysis}
+          onPress={onSwitchToVault ?? onOpenHistory ?? onOpenAnalysis}
         >
           <View style={styles.cardMetaWrap}>
             <Text style={styles.cardTitle}>Match Vault</Text>
@@ -185,13 +187,13 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
     paddingHorizontal: 8,
     paddingVertical: 3,
-    backgroundColor: 'rgba(59, 130, 246, 0.2)',
+    backgroundColor: 'rgba(255, 255, 255, 0.14)',
     borderRadius: radii.sm,
     borderWidth: 1,
-    borderColor: 'rgba(59, 130, 246, 0.4)',
+    borderColor: 'rgba(255, 255, 255, 0.32)',
   },
   tagPillText: {
-    color: '#60A5FA',
+    color: '#FFFFFF',
     fontSize: 10,
     fontWeight: '800',
   },

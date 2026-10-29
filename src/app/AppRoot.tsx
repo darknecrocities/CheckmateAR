@@ -37,11 +37,9 @@ export default function AppRoot() {
   useEffect(() => {
     StatusBar.setHidden(true, 'none');
     if (Platform.OS === 'android') {
-      try {
-        NavigationBar.setVisibilityAsync('hidden');
-      } catch {
-        // Fallback for non-supported device runtimes
-      }
+      NavigationBar.setVisibilityAsync('hidden').catch(() => {
+        // Safe fallback for device lifecycle shifts
+      });
     }
   }, []);
 

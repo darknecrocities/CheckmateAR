@@ -74,18 +74,18 @@ export interface ChessPositionRecognitionResult {
 }
 
 const YOLO_CLASS_COLORS: Record<YoloPieceClass, string> = {
-  'white-pawn': '#06B6D4',
-  'white-knight': '#6366F1',
-  'white-bishop': '#0EA5E9',
-  'white-rook': '#2563EB',
-  'white-queen': '#8B5CF6',
-  'white-king': '#3B82F6',
-  'black-pawn': '#14B8A6',
-  'black-knight': '#7C3AED',
-  'black-bishop': '#0284C7',
-  'black-rook': '#1D4ED8',
-  'black-queen': '#4F46E5',
-  'black-king': '#2563EB',
+  'white-pawn': '#FFFFFF',
+  'white-knight': '#F4F4F5',
+  'white-bishop': '#E4E4E7',
+  'white-rook': '#D4D4D8',
+  'white-queen': '#FFFFFF',
+  'white-king': '#FAFAFA',
+  'black-pawn': '#71717A',
+  'black-knight': '#52525B',
+  'black-bishop': '#3F3F46',
+  'black-rook': '#27272A',
+  'black-queen': '#18181B',
+  'black-king': '#09090B',
 };
 
 const PIECE_HEIGHT_MULTIPLIER: Record<PieceType, number> = {

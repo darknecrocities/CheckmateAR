@@ -14,6 +14,7 @@ import { Sparkles, Box } from 'lucide-react-native';
 
 import { HomeStartTab } from './components/HomeStartTab';
 import { HomeStrategyTab } from './components/HomeStrategyTab';
+import { HomeVaultTab } from './components/HomeVaultTab';
 import { ChessMascotBackground } from '../../components/mascot/ChessMascotBackground';
 import { KineticPressable } from '../../components/ui/MotionPrimitives';
 import { StrategyItem } from '../../services/chess/strategyLibrary';
@@ -22,7 +23,7 @@ import { spacing, radii } from '../../theme/spacing';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const TRACK_INNER_WIDTH = SCREEN_WIDTH - spacing.md * 2 - 8;
-const SEGMENT_PILL_WIDTH = TRACK_INNER_WIDTH / 2;
+const SEGMENT_PILL_WIDTH = TRACK_INNER_WIDTH / 3;
 
 interface HomeScreenProps {
   onStartScan: (fen?: string, title?: string) => void;
@@ -41,16 +42,19 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   onOpenHistory,
   onOpenTrainer,
 }) => {
-  const [activeTab, setActiveTab] = useState<'start' | 'strategy'>('start');
+  const [activeTab, setActiveTab] = useState<'start' | 'strategy' | 'vault'>('start');
   const slideX = useRef(new Animated.Value(0)).current;
 
-  const handleTabSwitch = (tab: 'start' | 'strategy') => {
+  const handleTabSwitch = (tab: 'start' | 'strategy' | 'vault') => {
     if (tab === activeTab) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
     setActiveTab(tab);
 
+    const targetX =
+      tab === 'start' ? 0 : tab === 'strategy' ? SEGMENT_PILL_WIDTH : SEGMENT_PILL_WIDTH * 2;
+
     Animated.spring(slideX, {
-      toValue: tab === 'start' ? 0 : SEGMENT_PILL_WIDTH,
+      toValue: targetX,
       ...motion.spring.tabSlide,
       useNativeDriver: true,
     }).start();
@@ -85,14 +89,15 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           }}
           accessibilityLabel="Launch Full Power AR"
         >
-          <Sparkles size={14} color="#60A5FA" />
+          <Sparkles size={14} color="#FFFFFF" />
           <Text style={styles.blendedPowerText}>AR Active</Text>
         </KineticPressable>
       </View>
 
-      {/* Glassmorphic Dual-Pill Switcher: [ Start ] vs [ Strategy ] */}
+      {/* Glassmorphic 3-Pill Switcher: [ Start ] | [ Strategy ] | [ Vault ] */}
       <View style={styles.segmentedContainer}>
         <Animated.View
+          pointerEvents="none"
           style={[
             styles.slidingIndicator,
             {
@@ -121,6 +126,16 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             Strategy
           </Text>
         </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.segmentBtn}
+          onPress={() => handleTabSwitch('vault')}
+          activeOpacity={0.85}
+        >
+          <Text style={[styles.segmentText, activeTab === 'vault' && styles.activeSegmentText]}>
+            Vault
+          </Text>
+        </TouchableOpacity>
       </View>
 
       <ScrollView
@@ -137,12 +152,18 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             onOpenTrainer={() => onOpenTrainer?.()}
             onOpenHistory={onOpenHistory}
             onSwitchToStrategy={() => handleTabSwitch('strategy')}
+            onSwitchToVault={() => handleTabSwitch('vault')}
           />
-        ) : (
+        ) : activeTab === 'strategy' ? (
           <HomeStrategyTab
             onAnalyzePosition={(fen) => onOpenAnalysis(fen)}
             onPracticeStrategy={(strat) => onOpenTrainer?.(strat)}
             onProjectInAR={(strat) => onStartScan(strat.fen, strat.title)}
+          />
+        ) : (
+          <HomeVaultTab
+            onOpenAnalysis={(fen) => onOpenAnalysis(fen)}
+            onProjectInAR={(fen, title) => onStartScan(fen, title)}
           />
         )}
       </ScrollView>
@@ -190,12 +211,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: radii.pill,
-    backgroundColor: 'rgba(59, 130, 246, 0.16)',
+    backgroundColor: 'rgba(255, 255, 255, 0.14)',
     borderWidth: 1,
-    borderColor: 'rgba(59, 130, 246, 0.35)',
+    borderColor: 'rgba(255, 255, 255, 0.32)',
   },
   blendedPowerText: {
-    color: '#60A5FA',
+    color: '#FFFFFF',
     fontSize: 12,
     fontWeight: '800',
     letterSpacing: -0.1,

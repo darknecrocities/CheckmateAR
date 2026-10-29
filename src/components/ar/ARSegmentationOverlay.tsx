@@ -46,8 +46,8 @@ export const ARSegmentationOverlay: React.FC<ARSegmentationOverlayProps> = ({
             {/* Translucent Board Segmentation Polygon */}
             <Polygon
               points={polygonPoints}
-              fill="rgba(37, 99, 235, 0.14)"
-              stroke="#3B82F6"
+              fill="rgba(255, 255, 255, 0.08)"
+              stroke="#FFFFFF"
               strokeWidth={1.8}
             />
 
@@ -58,10 +58,10 @@ export const ARSegmentationOverlay: React.FC<ARSegmentationOverlayProps> = ({
               width={bw}
               height={bh}
               fill="none"
-              stroke="#2563EB"
+              stroke="rgba(255, 255, 255, 0.85)"
               strokeWidth={1.5}
               strokeDasharray="6,4"
-              opacity={0.7}
+              opacity={0.8}
             />
 
             {/* Top-Left `chess_board 0.97` Classification Tag */}
@@ -71,12 +71,12 @@ export const ARSegmentationOverlay: React.FC<ARSegmentationOverlayProps> = ({
               width={boardLabelWidth}
               height={18}
               rx={3}
-              fill="#2563EB"
+              fill="#FFFFFF"
             />
             <SvgText
               x={bx + 6}
               y={boardLabelY + 13}
-              fill="#FFFFFF"
+              fill="#000000"
               fontSize="10"
               fontWeight="800"
             >

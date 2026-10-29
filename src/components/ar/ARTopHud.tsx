@@ -14,6 +14,8 @@ interface ARTopHudProps {
   isLocked?: boolean;
   boardConfidence?: number;
   pieceCount?: number;
+  playerSide?: 'white' | 'black';
+  onTogglePlayerSide?: () => void;
   onBack?: () => void;
 }
 
@@ -26,6 +28,8 @@ export const ARTopHud: React.FC<ARTopHudProps> = ({
   isLocked = false,
   boardConfidence = 0.97,
   pieceCount,
+  playerSide,
+  onTogglePlayerSide,
   onBack,
 }) => {
   return (
@@ -60,6 +64,19 @@ export const ARTopHud: React.FC<ARTopHudProps> = ({
               )
             )}
           </View>
+
+          {playerSide && onTogglePlayerSide && (
+            <TouchableOpacity
+              style={styles.playerSideBtn}
+              onPress={onTogglePlayerSide}
+              activeOpacity={0.8}
+              accessibilityLabel={`Playing as ${playerSide}. Tap to flip side.`}
+            >
+              <Text style={styles.playerSideText}>
+                {playerSide === 'white' ? '⚪ White' : '⚫ Black'}
+              </Text>
+            </TouchableOpacity>
+          )}
         </View>
 
         {/* Engine Evaluation Pill */}
@@ -135,7 +152,7 @@ const styles = StyleSheet.create({
     width: 7,
     height: 7,
     borderRadius: 3.5,
-    backgroundColor: '#3B82F6',
+    backgroundColor: '#FFFFFF',
     marginRight: 7,
   },
   lockedDot: {
@@ -211,8 +228,25 @@ const styles = StyleSheet.create({
     color: colors.dark.textSecondary,
     fontSize: 10.5,
   },
+  playerSideBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(20, 20, 24, 0.88)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.28)',
+    borderRadius: radii.pill,
+    paddingHorizontal: 10,
+    height: 38,
+  },
+  playerSideText: {
+    color: '#FFFFFF',
+    fontSize: 11.5,
+    fontWeight: '800',
+  },
   segBadge: {
-    backgroundColor: 'rgba(37, 99, 235, 0.88)',
+    backgroundColor: 'rgba(255, 255, 255, 0.16)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.32)',
     paddingHorizontal: 9,
     paddingVertical: 4,
     borderRadius: radii.sm,

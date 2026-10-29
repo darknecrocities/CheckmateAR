@@ -285,7 +285,8 @@ export interface KineticRouteTransitionProps {
 }
 
 /**
- * Spatial route transition container that springs screens into view on navigation.
+ * Spatial route transition container that springs screens into view with
+ * fluid directional slide, Apple-grade spatial scale, and tactile micro-haptics.
  */
 export const KineticRouteTransition: React.FC<KineticRouteTransitionProps> = ({
   routeKey,
@@ -297,25 +298,28 @@ export const KineticRouteTransition: React.FC<KineticRouteTransitionProps> = ({
   const scale = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
-    opacity.setValue(0.35);
-    translateY.setValue(10);
-    scale.setValue(0.985);
+    Haptics.selectionAsync().catch(() => {});
+    opacity.setValue(0.2);
+    translateY.setValue(18);
+    scale.setValue(0.95);
 
     Animated.parallel([
       Animated.timing(opacity, {
         toValue: 1,
-        duration: 210,
+        duration: 240,
         easing: Easing.out(Easing.cubic),
         useNativeDriver: true,
       }),
       Animated.spring(translateY, {
         toValue: 0,
-        ...motion.spring.entrance,
+        friction: 8,
+        tension: 65,
         useNativeDriver: true,
       }),
       Animated.spring(scale, {
         toValue: 1,
-        ...motion.spring.entrance,
+        friction: 8,
+        tension: 65,
         useNativeDriver: true,
       }),
     ]).start();
