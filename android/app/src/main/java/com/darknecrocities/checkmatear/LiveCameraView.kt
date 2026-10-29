@@ -55,7 +55,7 @@ class LiveCameraView @JvmOverloads constructor(
             }
             ctx = ctx.baseContext
         }
-        return (context as? ThemedReactContext)?.currentActivity as? LifecycleOwner
+        return (context as? ReactContext)?.currentActivity as? LifecycleOwner
     }
 
     private fun startCamera() {
