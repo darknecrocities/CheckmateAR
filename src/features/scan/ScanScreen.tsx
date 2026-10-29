@@ -14,6 +14,7 @@ import { CameraMotionTracker } from '../../services/vision/motionTracker';
 import { StockfishEngine } from '../../services/stockfish/stockfishEngine';
 import { formatEvaluationScore } from '../../services/stockfish/uciProtocol';
 import { CHESS_STRATEGY_DATABASE } from '../../services/chess/strategyLibrary';
+import { SAMPLE_CHESS_GAMES } from '../../services/chess/samplePhotoGames';
 import { classifyGridToFen } from '../../services/vision/colorAgnosticClassifier';
 import { LiveStreamCamera, BoardStreamData } from '../../components/camera/LiveStreamCamera';
 import { ARPerspectiveBoard } from '../../components/ar/ARPerspectiveBoard';
@@ -58,7 +59,7 @@ export const ScanScreen: React.FC<ScanScreenProps> = ({
   const [showSideSelector, setShowSideSelector] = useState<boolean>(false);
   const [isFrozen, setIsFrozen] = useState<boolean>(false);
   const [isLocked, setIsLocked] = useState<boolean>(false);
-  const [showBoardMask, setShowBoardMask] = useState<boolean>(true);
+  const [showBoardMask, setShowBoardMask] = useState<boolean>(false);
   const [showPieceBoxes, setShowPieceBoxes] = useState<boolean>(false);
   const [boardConfidence, setBoardConfidence] = useState<number>(initialFen ? 0.97 : 0.0);
   const [strategyCursor, setStrategyCursor] = useState<number>(0);
@@ -233,11 +234,12 @@ export const ScanScreen: React.FC<ScanScreenProps> = ({
 
   const handleCycleLivePosition = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
-    const nextIdx = (strategyCursor + 1) % CHESS_STRATEGY_DATABASE.length;
+    const combinedGames = [...SAMPLE_CHESS_GAMES, ...CHESS_STRATEGY_DATABASE];
+    const nextIdx = (strategyCursor + 1) % combinedGames.length;
     setStrategyCursor(nextIdx);
-    const strat = CHESS_STRATEGY_DATABASE[nextIdx];
+    const strat = combinedGames[nextIdx];
     setCurrentFen(strat.fen);
-    setStatusMsg(`Segmented: ${strat.title}`);
+    setStatusMsg(`Position Loaded: ${strat.title}`);
   };
 
   const handleSnapAutoAlign = () => {
@@ -311,6 +313,7 @@ export const ScanScreen: React.FC<ScanScreenProps> = ({
             selectedSquare={selectedSquare}
             isLocked={isLocked}
             fen={currentFen}
+            arMode={showBoardMask ? 'wireframe' : 'strategy'}
             onCornerChange={handleCornerChange}
             onSquarePress={(sq) => {
               setSelectedSquare(sq);
