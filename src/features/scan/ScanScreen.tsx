@@ -16,6 +16,7 @@ import { formatEvaluationScore } from '../../services/stockfish/uciProtocol';
 import { CHESS_STRATEGY_DATABASE } from '../../services/chess/strategyLibrary';
 import { SAMPLE_CHESS_GAMES } from '../../services/chess/samplePhotoGames';
 import { classifyGridToFen } from '../../services/vision/colorAgnosticClassifier';
+import { formatTacticalMoveAction } from '../../services/vision/multimodalChessVision';
 import { LiveStreamCamera, BoardStreamData } from '../../components/camera/LiveStreamCamera';
 import { ARPerspectiveBoard } from '../../components/ar/ARPerspectiveBoard';
 import { ARSegmentationOverlay } from '../../components/ar/ARSegmentationOverlay';
@@ -116,8 +117,9 @@ export const ScanScreen: React.FC<ScanScreenProps> = ({
     try {
       const result = await engineRef.current.analyzePosition(fen);
       setEvaluation(result);
+      const moveAct = formatTacticalMoveAction(fen, result.bestMove);
       setStatusMsg(
-        `Predicted: ${result.bestMoveSan} (${formatEvaluationScore(result.scoreCp, result.mateIn)})`
+        `Next Move: ${moveAct.pieceName} ${moveAct.from} ➔ ${moveAct.to} (${formatEvaluationScore(result.scoreCp, result.mateIn)})`
       );
     } catch {
       setStatusMsg('Engine ready • Waiting for legal move');

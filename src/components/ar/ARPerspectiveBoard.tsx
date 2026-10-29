@@ -1,11 +1,13 @@
 import React from 'react';
 import { View, StyleSheet, Dimensions, PanResponder } from 'react-native';
-import Svg, { Polygon, Line, G, Circle, Text as SvgText, Rect } from 'react-native-svg';
+import Svg, { Polygon, Line, G, Circle, Text as SvgText } from 'react-native-svg';
 import { QuadPoints, Matrix3x3, DetectedSquare, Point2D } from '../../types/vision';
 import { SquareCoord } from '../../types/chess';
 import { CandidateMove } from '../../types/stockfish';
 import { ARMoveArrow } from './ARMoveArrow';
 import { AREvalPill } from './AREvalPill';
+import { ARLeaderCallout } from './ARLeaderCallout';
+import { formatTacticalMoveAction } from '../../services/vision/multimodalChessVision';
 import { colors } from '../../theme/colors';
 
 export interface ARPerspectiveBoardProps {
@@ -30,41 +32,13 @@ export interface ARPerspectiveBoardProps {
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const HANDLE_RADIUS = 22;
 
-function parsePiecesFromFen(fen?: string): Record<SquareCoord, { type: string; color: 'w' | 'b' }> {
-  if (!fen) return {} as Record<SquareCoord, { type: string; color: 'w' | 'b' }>;
-  const placement = fen.split(' ')[0];
-  const rows = placement.split('/');
-  const result: Record<string, { type: string; color: 'w' | 'b' }> = {};
-  const files = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
-
-  for (let r = 0; r < 8 && r < rows.length; r++) {
-    const rank = 8 - r;
-    let fileIdx = 0;
-    const row = rows[r];
-
-    for (let c = 0; c < row.length; c++) {
-      const char = row[c];
-      if (char >= '1' && char <= '8') {
-        fileIdx += parseInt(char, 10);
-      } else if (fileIdx < 8) {
-        const file = files[fileIdx];
-        const isWhite = char === char.toUpperCase();
-        result[`${file}${rank}`] = {
-          type: char.toUpperCase(),
-          color: isWhite ? 'w' : 'b',
-        };
-        fileIdx++;
-      }
-    }
-  }
-  return result as Record<SquareCoord, { type: string; color: 'w' | 'b' }>;
-}
-
 /**
- * True Real-Time Strategy AR Overlay for Chessboards.
- * Eliminates the opaque cartoon board cover so the physical camera feed
- * and real chess pieces remain 100% visible, projecting holographic
- * tactical arrows, source piece halos, and destination beacons directly onto the board.
+ * True Real-Time Strategy AR Overlay for Physical Chessboards.
+ * Plots directly onto physical chessboards and pieces with 3D homography:
+ * - Glowing tactical green source quad on the physical piece (e.g. d8)
+ * - Glowing tactical target quad on the destination tile (e.g. g5)
+ * - AR 3D leader line and HUD callout badge ("NEXT MOVE: QUEEN d8 -> g5")
+ * - Cyan glowing perimeter halo tracing the board rim with coordinates
  */
 export const ARPerspectiveBoard: React.FC<ARPerspectiveBoardProps> = ({
   corners,
@@ -86,12 +60,15 @@ export const ARPerspectiveBoard: React.FC<ARPerspectiveBoardProps> = ({
 }) => {
   const borderPoints = `${corners.topLeft.x},${corners.topLeft.y} ${corners.topRight.x},${corners.topRight.y} ${corners.bottomRight.x},${corners.bottomRight.y} ${corners.bottomLeft.x},${corners.bottomLeft.y}`;
 
+  const moveDetails = React.useMemo(
+    () => formatTacticalMoveAction(fen || '', bestMove),
+    [fen, bestMove]
+  );
+
   const fromSquare = (bestMove && bestMove.length >= 4 ? bestMove.slice(0, 2) : null) as SquareCoord | null;
   const toSquare = (bestMove && bestMove.length >= 4 ? bestMove.slice(2, 4) : null) as SquareCoord | null;
   const toSquareData = toSquare ? squares[toSquare] : null;
   const fromSquareData = fromSquare ? squares[fromSquare] : null;
-
-  const parsedPieces = React.useMemo(() => parsePiecesFromFen(fen), [fen]);
 
   const createCornerPanResponder = (cornerKey: keyof QuadPoints) => {
     return PanResponder.create({
@@ -128,31 +105,31 @@ export const ARPerspectiveBoard: React.FC<ARPerspectiveBoardProps> = ({
                 key={`tile_${sq.coord}`}
                 points={polyStr}
                 fill="none"
-                stroke="rgba(255, 255, 255, 0.18)"
-                strokeWidth={0.7}
+                stroke="rgba(0, 229, 255, 0.22)"
+                strokeWidth={0.8}
               />
             );
           })}
 
-        {/* Outer Board Frame */}
+        {/* 1. Outer Board Perimeter Frame — High-Contrast Cyan Glow */}
         <Polygon
           points={borderPoints}
           stroke="#000000"
-          strokeWidth={isLocked ? 4.5 : 3.5}
-          strokeOpacity={0.6}
+          strokeWidth={isLocked ? 5.5 : 4.5}
+          strokeOpacity={0.65}
           fill="none"
         />
         <Polygon
           points={borderPoints}
-          stroke="#FFFFFF"
-          strokeWidth={isLocked ? 2.5 : 1.8}
-          strokeDasharray={isLocked ? undefined : '8 6'}
-          strokeOpacity={isLocked ? 0.95 : 0.75}
+          stroke="#00E5FF"
+          strokeWidth={isLocked ? 3.5 : 2.5}
+          strokeDasharray={isLocked ? undefined : '10 6'}
+          strokeOpacity={isLocked ? 1.0 : 0.85}
           fill="none"
         />
 
         {/* Outer Corner Reticle Brackets */}
-        <G stroke="#FFFFFF" strokeWidth={isLocked ? 4 : 3} strokeLinecap="round">
+        <G stroke="#00E5FF" strokeWidth={isLocked ? 4.5 : 3.5} strokeLinecap="round">
           <Line x1={corners.topLeft.x} y1={corners.topLeft.y} x2={corners.topLeft.x + 24} y2={corners.topLeft.y} />
           <Line x1={corners.topLeft.x} y1={corners.topLeft.y} x2={corners.topLeft.x} y2={corners.topLeft.y + 24} />
           <Line x1={corners.topRight.x} y1={corners.topRight.y} x2={corners.topRight.x - 24} y2={corners.topRight.y} />
@@ -163,87 +140,82 @@ export const ARPerspectiveBoard: React.FC<ARPerspectiveBoardProps> = ({
           <Line x1={corners.bottomLeft.x} y1={corners.bottomLeft.y} x2={corners.bottomLeft.x} y2={corners.bottomLeft.y - 24} />
         </G>
 
-        {/* Perspective Coordinate Labels */}
-        {isWireframe &&
-          fileLabels.map((f) => {
-            const sq = squares[`${f}1` as SquareCoord];
-            if (!sq) return null;
-            return (
-              <SvgText
-                key={`file_${f}`}
-                x={sq.screenCenter.x}
-                y={sq.screenPolygon[2].y + 11}
-                fill="#FFFFFF"
-                fontSize={9}
-                fontWeight="700"
-                textAnchor="middle"
-              >
-                {f}
-              </SvgText>
-            );
-          })}
+        {/* Perspective Coordinates Along Board Rim */}
+        {fileLabels.map((f) => {
+          const sq = squares[`${f}1` as SquareCoord];
+          if (!sq) return null;
+          return (
+            <SvgText
+              key={`file_${f}`}
+              x={sq.screenCenter.x}
+              y={sq.screenPolygon[2].y + 13}
+              fill="#00E5FF"
+              fontSize={10}
+              fontWeight="800"
+              textAnchor="middle"
+            >
+              {f}
+            </SvgText>
+          );
+        })}
 
-        {isWireframe &&
-          rankLabels.map((r) => {
-            const sq = squares[`a${r}` as SquareCoord];
-            if (!sq) return null;
-            return (
-              <SvgText
-                key={`rank_${r}`}
-                x={sq.screenPolygon[0].x - 8}
-                y={sq.screenCenter.y + 3}
-                fill="#FFFFFF"
-                fontSize={9}
-                fontWeight="700"
-                textAnchor="end"
-              >
-                {r}
-              </SvgText>
-            );
-          })}
+        {rankLabels.map((r) => {
+          const sq = squares[`a${r}` as SquareCoord];
+          if (!sq) return null;
+          return (
+            <SvgText
+              key={`rank_${r}`}
+              x={sq.screenPolygon[0].x - 9}
+              y={sq.screenCenter.y + 3}
+              fill="#00E5FF"
+              fontSize={10}
+              fontWeight="800"
+              textAnchor="end"
+            >
+              {r}
+            </SvgText>
+          );
+        })}
 
-        {/* 1. Tactical Source Square Reticle Halo */}
+        {/* 2. Tactical Source Square Quad (Under Physical Piece to Move) */}
         {fromSquareData && (
-          <G key="source_halo">
-            {/* Outer animated pulse ring */}
+          <G key="source_tactical_quad">
             <Polygon
               points={fromSquareData.screenPolygon.map((p) => `${p.x},${p.y}`).join(' ')}
-              stroke="#FFFFFF"
-              strokeWidth={2.4}
-              strokeDasharray="6 4"
-              fill="rgba(255, 255, 255, 0.15)"
+              stroke="#00E676"
+              strokeWidth={3}
+              fill="rgba(0, 230, 118, 0.22)"
             />
-            {/* Center tactical crosshair ring on the real piece */}
+            {/* Glowing Corner Notches on Source Square */}
             <Circle
               cx={fromSquareData.screenCenter.x}
               cy={fromSquareData.screenCenter.y}
-              r={14}
-              stroke="#FFFFFF"
+              r={12}
+              stroke="#00E676"
               strokeWidth={1.8}
-              strokeDasharray="3 3"
+              strokeDasharray="4 4"
               fill="none"
             />
           </G>
         )}
 
-        {/* 2. Tactical Destination Square Target Beacon */}
+        {/* 3. Tactical Destination Square Quad (Target Square on Physical Board) */}
         {toSquareData && (
-          <G key="dest_beacon">
+          <G key="dest_tactical_quad">
             <Polygon
               points={toSquareData.screenPolygon.map((p) => `${p.x},${p.y}`).join(' ')}
-              stroke={colors.ar.bestMoveTile}
-              strokeWidth={2.8}
-              fill={colors.ar.bestMoveTile}
-              fillOpacity={0.28}
+              stroke="#00E676"
+              strokeWidth={3}
+              fill="rgba(0, 230, 118, 0.22)"
             />
-            {/* Concentric destination target rings */}
+            {/* Concentric Target Rings */}
             <Circle
               cx={toSquareData.screenCenter.x}
               cy={toSquareData.screenCenter.y}
-              r={12}
-              stroke={colors.ar.bestMoveTile}
+              r={14}
+              stroke="#00E676"
               strokeWidth={2}
-              fill="rgba(255, 255, 255, 0.2)"
+              fill="rgba(0, 230, 118, 0.15)"
             />
             <Circle
               cx={toSquareData.screenCenter.x}
@@ -265,53 +237,6 @@ export const ARPerspectiveBoard: React.FC<ARPerspectiveBoardProps> = ({
           />
         )}
 
-        {/* Uncertain Squares Warning Outlines */}
-        {uncertainSquares.map((coord) => {
-          const sq = squares[coord];
-          if (!sq) return null;
-          return (
-            <Polygon
-              key={`uncertain_${coord}`}
-              points={sq.screenPolygon.map((p) => `${p.x},${p.y}`).join(' ')}
-              stroke={colors.ar.uncertainTile}
-              strokeWidth={2}
-              strokeDasharray="4 4"
-              fill={colors.ar.uncertainTile}
-              fillOpacity={0.2}
-            />
-          );
-        })}
-
-        {/* Optional Piece Badges (Only if explicitly enabled by user) */}
-        {showPieceTokens &&
-          Object.entries(parsedPieces).map(([coord, piece]) => {
-            const sq = squares[coord as SquareCoord];
-            if (!sq) return null;
-            const isWhite = piece.color === 'w';
-            return (
-              <G key={`piece_${coord}`}>
-                <Circle
-                  cx={sq.screenCenter.x}
-                  cy={sq.screenCenter.y}
-                  r={10}
-                  fill={isWhite ? '#FFFFFF' : '#141414'}
-                  stroke={isWhite ? '#000000' : '#FFFFFF'}
-                  strokeWidth={1.2}
-                />
-                <SvgText
-                  x={sq.screenCenter.x}
-                  y={sq.screenCenter.y + 3.5}
-                  textAnchor="middle"
-                  fontSize={10}
-                  fontWeight="800"
-                  fill={isWhite ? '#000000' : '#FFFFFF'}
-                >
-                  {piece.type}
-                </SvgText>
-              </G>
-            );
-          })}
-
         {/* Candidate Move Vectors */}
         {candidates.slice(1, 3).map((cand, idx) => (
           <ARMoveArrow
@@ -331,25 +256,27 @@ export const ARPerspectiveBoard: React.FC<ARPerspectiveBoardProps> = ({
             fromCoord={fromSquare}
             toCoord={toSquare}
             homography={homography}
-            color={colors.ar.bestMoveArrow}
+            color="#00E676"
             isCandidate={false}
             isWhiteBottom={isWhiteBottom}
           />
         )}
 
-        {/* Floating Perspective Evaluation Pill */}
-        {toSquareData && (
-          <AREvalPill
-            position={toSquareData.screenCenter}
-            san={bestMoveSan}
+        {/* 4. AR Tactical Leader Callout Badge ("NEXT MOVE: QUEEN d8 -> g5") */}
+        {fromSquare && toSquare && fromSquareData && (
+          <ARLeaderCallout
+            piecePosition={fromSquareData.screenCenter}
+            pieceName={moveDetails.pieceName}
+            fromCoord={fromSquare}
+            toCoord={toSquare}
             evalText={evalText}
-            color={colors.ar.pillBackground}
-            textColor={colors.ar.pillText}
+            screenWidth={SCREEN_WIDTH}
+            screenHeight={SCREEN_HEIGHT}
           />
         )}
       </Svg>
 
-      {/* Interactive Draggable Corner Touch Targets (Only when not locked) */}
+      {/* Interactive Draggable Corner Touch Targets (When not locked) */}
       {!isLocked && (
         <>
           <View
@@ -380,9 +307,9 @@ const styles = StyleSheet.create({
     width: HANDLE_RADIUS * 2,
     height: HANDLE_RADIUS * 2,
     borderRadius: HANDLE_RADIUS,
-    backgroundColor: 'rgba(255, 255, 255, 0.22)',
+    backgroundColor: 'rgba(0, 229, 255, 0.25)',
     borderWidth: 2,
-    borderColor: '#FFFFFF',
+    borderColor: '#00E5FF',
     justifyContent: 'center',
     alignItems: 'center',
   },
