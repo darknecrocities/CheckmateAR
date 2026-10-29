@@ -1,24 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  Modal,
-  Dimensions,
-  ScrollView,
-} from 'react-native';
+import { View, Text, StyleSheet, Modal, Dimensions, ScrollView } from 'react-native';
 import { Chess } from 'chess.js';
 import * as Haptics from 'expo-haptics';
 import {
-  X,
-  RotateCcw,
-  ChevronLeft,
-  ChevronRight,
-  Play,
-  Pause,
-  Target,
-  Cpu,
-  Award,
+  X, RotateCcw, ChevronLeft, ChevronRight, Play, Pause, Target, Cpu, Award, Scan,
 } from 'lucide-react-native';
 import { StrategyItem } from '../../../services/chess/strategyLibrary';
 import { ChessBoard2D } from '../../../components/chess/ChessBoard2D';
@@ -35,17 +20,21 @@ export interface StrategyInspectorModalProps {
   onClose: () => void;
   onAnalyzeInEngine: (fen: string) => void;
   onPracticeInTrainer: (strategy: StrategyItem) => void;
+  onProjectInAR?: (strategy: StrategyItem, activeFen: string) => void;
 }
 
 interface ReplayStep {
   fen: string;
   sanMove: string;
   uciMove: string;
+  nextReplyUci?: string;
+  predictedSan?: string;
 }
 
 /**
  * Interactive Step-by-Step Strategy Replayer & Tactical Inspector Modal.
- * Computes legal FEN states across `strategy.uciMoves` using `chess.js`.
+ * Computes legal FEN states, primary Move Prediction Arrows, and opponent Reply Arrows
+ * across `strategy.uciMoves` using `chess.js`.
  */
 export const StrategyInspectorModal: React.FC<StrategyInspectorModalProps> = ({
   strategy,
@@ -53,39 +42,53 @@ export const StrategyInspectorModal: React.FC<StrategyInspectorModalProps> = ({
   onClose,
   onAnalyzeInEngine,
   onPracticeInTrainer,
+  onProjectInAR,
 }) => {
   const [stepIndex, setStepIndex] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(false);
 
   const replayTimeline = useMemo<ReplayStep[]>(() => {
     if (!strategy) return [];
+
+    const sanLookup: string[] = [];
+    const fenStates: string[] = [strategy.fen];
+
+    try {
+      const sim = new Chess(strategy.fen);
+      strategy.uciMoves.forEach((uci) => {
+        const from = uci.slice(0, 2);
+        const to = uci.slice(2, 4);
+        const m =
+          uci.length > 4
+            ? sim.move({ from, to, promotion: uci[4] })
+            : sim.move({ from, to });
+        if (m) {
+          sanLookup.push(m.san);
+          fenStates.push(sim.fen());
+        }
+      });
+    } catch {
+      // Custom endgame study fallback
+    }
+
     const steps: ReplayStep[] = [
       {
         fen: strategy.fen,
         sanMove: 'Initial Position',
         uciMove: strategy.uciMoves[0] ?? '',
+        nextReplyUci: strategy.uciMoves[1],
+        predictedSan: sanLookup[0] ?? 'Best',
       },
     ];
 
-    try {
-      const game = new Chess(strategy.fen);
-      strategy.uciMoves.forEach((uci, idx) => {
-        const from = uci.slice(0, 2);
-        const to = uci.slice(2, 4);
-        const moveObj =
-          uci.length > 4
-            ? game.move({ from, to, promotion: uci[4] })
-            : game.move({ from, to });
-        if (moveObj) {
-          steps.push({
-            fen: game.fen(),
-            sanMove: `${idx + 1}. ${moveObj.san}`,
-            uciMove: strategy.uciMoves[idx + 1] ?? uci,
-          });
-        }
+    for (let i = 0; i < sanLookup.length; i++) {
+      steps.push({
+        fen: fenStates[i + 1] ?? strategy.fen,
+        sanMove: `${i + 1}. ${sanLookup[i]}`,
+        uciMove: strategy.uciMoves[i + 1] ?? strategy.uciMoves[i] ?? '',
+        nextReplyUci: strategy.uciMoves[i + 2],
+        predictedSan: sanLookup[i + 1] ?? sanLookup[i] ?? 'Goal',
       });
-    } catch {
-      // Fallback to initial position if custom study FEN
     }
 
     return steps;
@@ -147,7 +150,9 @@ export const StrategyInspectorModal: React.FC<StrategyInspectorModalProps> = ({
                 <Text style={styles.diffBadgeText}>{strategy.difficulty}</Text>
               </View>
               <View style={styles.keySquareBadge}>
-                <Text style={styles.keySquareText}>KEY: {strategy.keySquare.toUpperCase()}</Text>
+                <Text style={styles.keySquareText}>
+                  PREDICT: {(currentFrame?.predictedSan || strategy.keySquare).toUpperCase()}
+                </Text>
               </View>
             </View>
 
@@ -165,11 +170,13 @@ export const StrategyInspectorModal: React.FC<StrategyInspectorModalProps> = ({
             <Text style={styles.title}>{strategy.title}</Text>
             <Text style={styles.movesText}>{strategy.moves}</Text>
 
-            {/* Interactive 2D Board Replayer */}
+            {/* Interactive 2D Board Replayer with Live Prediction & Counter-Prediction Arrows */}
             <View style={styles.boardWrap}>
               <ChessBoard2D
                 fen={currentFrame?.fen ?? strategy.fen}
                 bestMove={currentFrame?.uciMove}
+                secondaryMove={currentFrame?.nextReplyUci}
+                predictionLabel={currentFrame?.predictedSan}
                 boardSize={MODAL_BOARD_SIZE}
               />
             </View>
@@ -207,7 +214,7 @@ export const StrategyInspectorModal: React.FC<StrategyInspectorModalProps> = ({
                 )}
                 <Text style={styles.playPillText}>
                   {stepIndex === 0
-                    ? 'Replay Line'
+                    ? `Play Line (Next: ${currentFrame?.predictedSan || 'Move'})`
                     : `Step ${stepIndex}/${maxSteps} (${currentFrame.sanMove})`}
                 </Text>
               </KineticPressable>
@@ -225,14 +232,14 @@ export const StrategyInspectorModal: React.FC<StrategyInspectorModalProps> = ({
             {/* Tactical Breakdown Card */}
             <LiquidGlassCard variant="spec" causticPosition="right" style={styles.goalCard}>
               <View style={styles.goalHeader}>
-                <Award size={14} color="#FFFFFF" />
+                <Award size={14} color="#10B981" />
                 <Text style={styles.goalTitle}>TACTICAL OBJECTIVE • {strategy.masterWinRate}</Text>
               </View>
               <Text style={styles.goalBody}>{strategy.tacticalGoal}</Text>
               <Text style={styles.conceptBody}>{strategy.concept}</Text>
             </LiquidGlassCard>
 
-            {/* Primary Action Buttons */}
+            {/* Primary Action Buttons: Trainer + AR Projection + Stockfish */}
             <View style={styles.actionRow}>
               <KineticPressable
                 scaleTo={0.94}
@@ -243,9 +250,24 @@ export const StrategyInspectorModal: React.FC<StrategyInspectorModalProps> = ({
                   onPracticeInTrainer(strategy);
                 }}
               >
-                <Target size={16} color="#000000" />
-                <Text style={styles.trainerBtnText}>Practice in Trainer</Text>
+                <Target size={15} color="#000000" />
+                <Text style={styles.trainerBtnText}>Practice</Text>
               </KineticPressable>
+
+              {onProjectInAR && (
+                <KineticPressable
+                  scaleTo={0.94}
+                  hapticStyle="medium"
+                  style={styles.arProjectBtn}
+                  onPress={() => {
+                    onClose();
+                    onProjectInAR(strategy, currentFrame?.fen ?? strategy.fen);
+                  }}
+                >
+                  <Scan size={15} color="#FFFFFF" />
+                  <Text style={styles.arProjectBtnText}>AR Overlay</Text>
+                </KineticPressable>
+              )}
 
               <KineticPressable
                 scaleTo={0.94}
@@ -256,8 +278,8 @@ export const StrategyInspectorModal: React.FC<StrategyInspectorModalProps> = ({
                   onAnalyzeInEngine(currentFrame?.fen ?? strategy.fen);
                 }}
               >
-                <Cpu size={16} color="#FFFFFF" />
-                <Text style={styles.engineBtnText}>Stockfish</Text>
+                <Cpu size={15} color="#FFFFFF" />
+                <Text style={styles.engineBtnText}>Engine</Text>
               </KineticPressable>
             </View>
           </ScrollView>
@@ -270,7 +292,7 @@ export const StrategyInspectorModal: React.FC<StrategyInspectorModalProps> = ({
 const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.82)',
+    backgroundColor: 'rgba(0, 0, 0, 0.84)',
     justifyContent: 'flex-end',
   },
   sheetContainer: {
@@ -282,7 +304,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     paddingTop: spacing.md,
     paddingBottom: spacing.xl,
-    maxHeight: '90%',
+    maxHeight: '92%',
   },
   headerRow: {
     flexDirection: 'row',
@@ -298,14 +320,10 @@ const styles = StyleSheet.create({
   catBadge: {
     paddingHorizontal: 8,
     paddingVertical: 3,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#EAF7F0',
     borderRadius: radii.sm,
   },
-  catBadgeText: {
-    color: '#000000',
-    fontSize: 9,
-    fontWeight: '800',
-  },
+  catBadgeText: { color: '#09090B', fontSize: 9, fontWeight: '800' },
   diffBadge: {
     paddingHorizontal: 8,
     paddingVertical: 3,
@@ -314,22 +332,16 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.2)',
   },
-  diffBadgeText: {
-    color: '#FFFFFF',
-    fontSize: 9,
-    fontWeight: '700',
-  },
+  diffBadgeText: { color: '#FFFFFF', fontSize: 9, fontWeight: '700' },
   keySquareBadge: {
     paddingHorizontal: 7,
     paddingVertical: 3,
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    backgroundColor: 'rgba(16, 185, 129, 0.18)',
     borderRadius: radii.sm,
+    borderWidth: 1,
+    borderColor: 'rgba(16, 185, 129, 0.4)',
   },
-  keySquareText: {
-    color: '#D4D4D4',
-    fontSize: 9,
-    fontWeight: '700',
-  },
+  keySquareText: { color: '#10B981', fontSize: 9, fontWeight: '800' },
   closeBtn: {
     width: 34,
     height: 34,
@@ -379,13 +391,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#EAF7F0',
     paddingHorizontal: spacing.md,
     height: 38,
     borderRadius: radii.pill,
   },
   playPillText: {
-    color: '#000000',
+    color: '#09090B',
     fontSize: 11,
     fontWeight: '800',
   },
@@ -400,7 +412,7 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   goalTitle: {
-    color: '#FFFFFF',
+    color: '#10B981',
     fontSize: 10,
     fontWeight: '800',
     letterSpacing: 0.5,
@@ -419,30 +431,45 @@ const styles = StyleSheet.create({
   },
   actionRow: {
     flexDirection: 'row',
-    gap: spacing.sm,
+    gap: 8,
     marginTop: spacing.sm,
   },
   trainerBtn: {
-    flex: 1.5,
+    flex: 1.15,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#EAF7F0',
     paddingVertical: 13,
     borderRadius: radii.lg,
   },
   trainerBtnText: {
-    color: '#000000',
-    fontSize: 13,
+    color: '#09090B',
+    fontSize: 12.5,
     fontWeight: '800',
   },
-  engineBtn: {
-    flex: 1,
+  arProjectBtn: {
+    flex: 1.15,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
+    backgroundColor: '#2563EB',
+    paddingVertical: 13,
+    borderRadius: radii.lg,
+  },
+  arProjectBtnText: {
+    color: '#FFFFFF',
+    fontSize: 12.5,
+    fontWeight: '800',
+  },
+  engineBtn: {
+    flex: 0.9,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 5,
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.2)',
@@ -451,7 +478,7 @@ const styles = StyleSheet.create({
   },
   engineBtnText: {
     color: '#FFFFFF',
-    fontSize: 13,
+    fontSize: 12.5,
     fontWeight: '700',
   },
 });

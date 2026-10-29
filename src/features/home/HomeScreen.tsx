@@ -10,11 +10,10 @@ import {
   Dimensions,
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
-import { Zap } from 'lucide-react-native';
+import { Sparkles, Box } from 'lucide-react-native';
 
 import { HomeStartTab } from './components/HomeStartTab';
 import { HomeStrategyTab } from './components/HomeStrategyTab';
-import { KineticMascotCompanion } from '../../components/mascot/KineticMascotCompanion';
 import { KineticPressable } from '../../components/ui/MotionPrimitives';
 import { StrategyItem } from '../../services/chess/strategyLibrary';
 import { motion } from '../../theme/motion';
@@ -25,7 +24,7 @@ const TRACK_INNER_WIDTH = SCREEN_WIDTH - spacing.md * 2 - 8;
 const SEGMENT_PILL_WIDTH = TRACK_INNER_WIDTH / 2;
 
 interface HomeScreenProps {
-  onStartScan: () => void;
+  onStartScan: (fen?: string, title?: string) => void;
   onOpenAnalysis: (fen?: string) => void;
   onOpenCoach: (fen?: string) => void;
   onOpenMascot: () => void;
@@ -58,29 +57,34 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      {/* Top Header Row */}
+      {/* Blended Minimal Appbar (Matching Reference Dashboard UI) */}
       <View style={styles.topHeader}>
-        <View style={styles.brandRow}>
-          <View style={styles.logoBadge}>
-            <View style={styles.logoReticle} />
-          </View>
-          <Text style={styles.brandTitle}>CheckmateAR</Text>
-        </View>
+        <KineticPressable
+          style={styles.leftSquircleBadge}
+          scaleTo={0.9}
+          hapticStyle="light"
+          onPress={onOpenMascot}
+          accessibilityLabel="Open 3D Mascot Studio"
+        >
+          <Box size={18} color="#FFFFFF" />
+        </KineticPressable>
 
         <KineticPressable
-          style={styles.powerPill}
-          scaleTo={0.9}
+          style={styles.blendedPowerAction}
+          scaleTo={0.92}
           hapticStyle="medium"
           onPress={() => {
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+            onStartScan();
           }}
+          accessibilityLabel="Launch Full Power AR"
         >
-          <Zap size={14} color="#000000" fill="#000000" />
-          <Text style={styles.powerPillText}>Engine Max</Text>
+          <Sparkles size={15} color="#FFFFFF" />
+          <Text style={styles.blendedPowerText}>Full Power</Text>
         </KineticPressable>
       </View>
 
-      {/* Kinetic Sliding Dual-Pill Switcher: [ Start ] vs [ Strategy ] */}
+      {/* Simple Blended Dual-Pill Switcher: [ Start ] vs [ Strategy ] */}
       <View style={styles.segmentedContainer}>
         <Animated.View
           style={[
@@ -113,26 +117,26 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         </TouchableOpacity>
       </View>
 
-      {/* Interactive Living 3D Knight Mascot Companion */}
-      <KineticMascotCompanion
-        reactionTrigger={activeTab}
-        onOpenMascotStudio={onOpenMascot}
-      />
-
-      <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}>
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
         {activeTab === 'start' ? (
           <HomeStartTab
-            onStartScan={onStartScan}
+            onStartScan={() => onStartScan()}
             onOpenAnalysis={() => onOpenAnalysis()}
             onOpenMascot={onOpenMascot}
             onOpenCoach={() => onOpenCoach()}
             onOpenTrainer={() => onOpenTrainer?.()}
             onOpenHistory={onOpenHistory}
+            onSwitchToStrategy={() => handleTabSwitch('strategy')}
           />
         ) : (
           <HomeStrategyTab
             onAnalyzePosition={(fen) => onOpenAnalysis(fen)}
             onPracticeStrategy={(strat) => onOpenTrainer?.(strat)}
+            onProjectInAR={(strat) => onStartScan(strat.fen, strat.title)}
           />
         )}
       </ScrollView>
@@ -150,90 +154,75 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.sm,
+    backgroundColor: '#000000',
   },
-  brandRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-  },
-  logoBadge: {
-    width: 32,
-    height: 32,
-    borderRadius: radii.md,
-    backgroundColor: '#FFFFFF',
+  leftSquircleBadge: {
+    width: 42,
+    height: 42,
+    borderRadius: 14,
+    backgroundColor: '#121215',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.09)',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  logoReticle: {
-    width: 16,
-    height: 16,
-    borderWidth: 2,
-    borderColor: '#000000',
-    borderRadius: 4,
-  },
-  brandTitle: {
-    color: '#FFFFFF',
-    fontSize: 18,
-    fontWeight: '800',
-    letterSpacing: -0.3,
-  },
-  powerPill: {
+  blendedPowerAction: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 5,
-    backgroundColor: '#FFFFFF',
-    paddingHorizontal: spacing.md,
-    paddingVertical: 6,
-    borderRadius: radii.pill,
+    gap: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
   },
-  powerPillText: {
-    color: '#000000',
-    fontSize: 11,
-    fontWeight: '800',
-    letterSpacing: 0.2,
+  blendedPowerText: {
+    color: '#FFFFFF',
+    fontSize: 13.5,
+    fontWeight: '700',
+    letterSpacing: -0.1,
   },
   segmentedContainer: {
     flexDirection: 'row',
     marginHorizontal: spacing.md,
-    marginTop: spacing.xs,
-    marginBottom: spacing.sm,
-    backgroundColor: 'rgba(20, 20, 24, 0.75)',
+    marginTop: 4,
+    marginBottom: spacing.md,
+    backgroundColor: '#0E0E11',
     borderRadius: radii.pill,
-    padding: 3,
-    borderWidth: 1.2,
-    borderColor: 'rgba(255, 255, 255, 0.12)',
+    padding: 4,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
     position: 'relative',
   },
   slidingIndicator: {
     position: 'absolute',
-    top: 3,
-    bottom: 3,
-    left: 3,
-    backgroundColor: '#FFFFFF',
+    top: 4,
+    bottom: 4,
+    left: 4,
+    backgroundColor: '#EAF7F0',
     borderRadius: radii.pill,
   },
   segmentBtn: {
     flex: 1,
-    paddingVertical: 9,
+    paddingVertical: 11,
     borderRadius: radii.pill,
     alignItems: 'center',
     zIndex: 2,
   },
   segmentText: {
-    color: '#737373',
-    fontSize: 13,
+    color: '#A1A1AA',
+    fontSize: 13.5,
     fontWeight: '700',
   },
   activeSegmentText: {
-    color: '#000000',
+    color: '#09090B',
+    fontWeight: '800',
   },
   scroll: {
     flex: 1,
   },
   scrollContent: {
     paddingHorizontal: spacing.md,
-    paddingTop: spacing.xs,
-    paddingBottom: 110,
+    paddingTop: 2,
+    paddingBottom: 118,
   },
 });

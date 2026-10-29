@@ -64,7 +64,7 @@ export const TacticalTrainerScreen: React.FC<TacticalTrainerScreenProps> = ({
   const [boardFen, setBoardFen] = useState<string>(currentStrategy.fen);
   const [selectedSquare, setSelectedSquare] = useState<SquareCoord | null>(null);
   const [status, setStatus] = useState<'playing' | 'solved' | 'wrong'>('playing');
-  const [showHint, setShowHint] = useState<boolean>(false);
+  const [showHint, setShowHint] = useState<boolean>(true);
 
   useEffect(() => {
     loadTrainerProfile().then(setProfile);
@@ -74,7 +74,7 @@ export const TacticalTrainerScreen: React.FC<TacticalTrainerScreenProps> = ({
     setBoardFen(currentStrategy.fen);
     setSelectedSquare(null);
     setStatus('playing');
-    setShowHint(false);
+    setShowHint(true);
   }, [currentStrategy]);
 
   const sideToMove = boardFen.split(' ')[1] === 'b' ? 'Black' : 'White';
@@ -196,6 +196,8 @@ export const TacticalTrainerScreen: React.FC<TacticalTrainerScreenProps> = ({
             fen={boardFen}
             selectedSquare={selectedSquare}
             bestMove={showHint || status === 'solved' ? expectedMove : undefined}
+            secondaryMove={showHint ? currentStrategy.uciMoves[1] : undefined}
+            predictionLabel={showHint ? expectedMove.toUpperCase() : undefined}
             onSquarePress={handleSquarePress}
             boardSize={TRAINER_BOARD_SIZE}
           />
@@ -233,12 +235,12 @@ export const TacticalTrainerScreen: React.FC<TacticalTrainerScreenProps> = ({
             style={styles.secondaryBtn}
             onPress={() => {
               Haptics.selectionAsync().catch(() => {});
-              setShowHint(true);
+              setShowHint((prev) => !prev);
             }}
           >
             <Lightbulb size={15} color="#FFFFFF" />
             <Text style={styles.secondaryBtnText}>
-              {showHint ? `Move: ${expectedMove.toUpperCase()}` : 'Hint'}
+              {showHint ? `Arrow: ${expectedMove.toUpperCase()}` : 'Show Arrow'}
             </Text>
           </KineticPressable>
 

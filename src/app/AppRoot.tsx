@@ -14,7 +14,6 @@ import { KineticRouteTransition } from '../components/ui/MotionPrimitives';
 import { StrategyItem } from '../services/chess/strategyLibrary';
 import { EngineEvaluation } from '../types/stockfish';
 import { StudySession } from '../types/study';
-import { colors } from '../theme/colors';
 
 export type AppRoute =
   | 'home'
@@ -29,13 +28,13 @@ export type AppRoute =
 export default function AppRoot() {
   const [currentRoute, setCurrentRoute] = useState<AppRoute>('home');
   const [activeFen, setActiveFen] = useState<string>(
-    '5B2/6P1/1p6/8/1N6/kP6/2K5/8 w - - 0 1'
+    'r1bqk2r/pppp1ppp/2n2n2/2b1p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 4 4'
   );
+  const [activeScanTitle, setActiveScanTitle] = useState<string | undefined>(undefined);
   const [activeEval, setActiveEval] = useState<EngineEvaluation | undefined>(undefined);
   const [activeStrategy, setActiveStrategy] = useState<StrategyItem | undefined>(undefined);
 
   useEffect(() => {
-    // Hide mobile status bar and navigation bar globally for full immersion
     StatusBar.setHidden(true, 'none');
     if (Platform.OS === 'android') {
       try {
@@ -45,6 +44,12 @@ export default function AppRoot() {
       }
     }
   }, []);
+
+  const navigateToScan = (fen?: string, title?: string) => {
+    if (fen) setActiveFen(fen);
+    setActiveScanTitle(title);
+    setCurrentRoute('scan');
+  };
 
   const navigateToAnalysis = (fen?: string, evaluation?: EngineEvaluation) => {
     if (fen) setActiveFen(fen);
@@ -59,6 +64,7 @@ export default function AppRoot() {
   };
 
   const navigateToTrainer = (strategy?: StrategyItem) => {
+    if (strategy?.fen) setActiveFen(strategy.fen);
     setActiveStrategy(strategy);
     setCurrentRoute('trainer');
   };
@@ -76,7 +82,6 @@ export default function AppRoot() {
     else if (tab === 'settings') setCurrentRoute('settings');
   };
 
-  // Determine active navbar tab
   const activeNavTab: NavTab =
     currentRoute === 'mascot'
       ? 'mascot'
@@ -95,7 +100,7 @@ export default function AppRoot() {
       <KineticRouteTransition routeKey={currentRoute}>
         {currentRoute === 'home' && (
           <HomeScreen
-            onStartScan={() => setCurrentRoute('scan')}
+            onStartScan={(fen, title) => navigateToScan(fen, title)}
             onOpenAnalysis={navigateToAnalysis}
             onOpenCoach={navigateToCoach}
             onOpenMascot={() => setCurrentRoute('mascot')}
@@ -115,12 +120,14 @@ export default function AppRoot() {
         {currentRoute === 'mascot' && (
           <MascotScreen
             onBack={() => setCurrentRoute('home')}
-            onStartAR={() => setCurrentRoute('scan')}
+            onStartAR={() => navigateToScan()}
           />
         )}
 
         {currentRoute === 'scan' && (
           <ScanScreen
+            initialFen={activeFen}
+            strategyTitle={activeScanTitle}
             onNavigateToAnalysis={navigateToAnalysis}
             onNavigateToCoach={navigateToCoach}
             onBackToHome={() => setCurrentRoute('home')}
@@ -156,12 +163,11 @@ export default function AppRoot() {
         )}
       </KineticRouteTransition>
 
-      {/* Signature Floating Pill Navbar (Matching Reference Screen 3) */}
       {showNavbar && (
         <FloatingPillNavbar
           currentTab={activeNavTab}
           onSelectTab={handleNavTabSelect}
-          onPressCenterAction={() => setCurrentRoute('scan')}
+          onPressCenterAction={() => navigateToScan()}
         />
       )}
     </View>
