@@ -94,8 +94,8 @@ class LiveCameraView @JvmOverloads constructor(
 
     private fun processFrame(imageProxy: ImageProxy) {
         val now = System.currentTimeMillis()
-        // Throttle frame processing to ~15 FPS (66ms) to keep CPU cool and battery optimal
-        if (now - lastAnalysisTimestamp < 66) {
+        // Throttle frame processing to ~10 FPS (100ms) to keep bridge and UI thread completely responsive
+        if (now - lastAnalysisTimestamp < 100) {
             imageProxy.close()
             return
         }
@@ -165,8 +165,30 @@ class LiveCameraView @JvmOverloads constructor(
                 }
             }
 
-            val isValid = minGy >= 0 && maxGy > minGy && minGx >= 0 && maxGx > minGx &&
-                    (maxGy - minGy) >= 6 && (maxGx - minGx) >= 6
+            val spanX = if (maxGx > minGx) maxGx - minGx + 1 else 0
+            val spanY = if (maxGy > minGy) maxGy - minGy + 1 else 0
+            val aspectRatio = if (spanY > 0) spanX.toFloat() / spanY.toFloat() else 0f
+
+            // Chessboard must be roughly square (0.70 to 1.35) and have sufficient grid coverage (at least 8 grid cells)
+            val isGeometryValid = minGy >= 0 && maxGy > minGy && minGx >= 0 && maxGx > minGx &&
+                    spanX >= 8 && spanY >= 8 && aspectRatio in 0.70f..1.35f
+
+            var checkerContrast = 0
+            if (isGeometryValid) {
+                var lightSum = 0
+                var darkSum = 0
+                for (r in 0 until 8) {
+                    val gy = (minGy + (r + 0.5f) * (spanY / 8f)).toInt().coerceIn(0, grid - 1)
+                    for (c in 0 until 8) {
+                        val gx = (minGx + (c + 0.5f) * (spanX / 8f)).toInt().coerceIn(0, grid - 1)
+                        val v = lum[gy][gx]
+                        if ((r + c) % 2 == 0) lightSum += v else darkSum += v
+                    }
+                }
+                checkerContrast = abs(lightSum / 32 - darkSum / 32)
+            }
+
+            val isValid = isGeometryValid && checkerContrast >= 12
 
             val viewWidth = previewView.width.toFloat().coerceAtLeast(1f)
             val viewHeight = previewView.height.toFloat().coerceAtLeast(1f)
@@ -178,7 +200,7 @@ class LiveCameraView @JvmOverloads constructor(
 
             val eventMap: WritableMap = Arguments.createMap()
             eventMap.putBoolean("isBoardFound", isValid)
-            eventMap.putDouble("confidence", if (isValid) 0.92 else 0.50)
+            eventMap.putDouble("confidence", if (isValid) 0.96 else 0.20)
 
             val cornersMap: WritableMap = Arguments.createMap()
             cornersMap.putMap("topLeft", makePoint(leftFrac * viewWidth, topFrac * viewHeight))

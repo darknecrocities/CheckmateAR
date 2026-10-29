@@ -10,11 +10,11 @@ import {
   Dimensions,
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
-import { Sparkles, Box } from 'lucide-react-native';
 
 import { HomeStartTab } from './components/HomeStartTab';
 import { HomeStrategyTab } from './components/HomeStrategyTab';
 import { HomeVaultTab } from './components/HomeVaultTab';
+import { GMWisdomHeader } from '../../components/navigation/GMWisdomHeader';
 import { ChessMascotBackground } from '../../components/mascot/ChessMascotBackground';
 import { KineticPressable } from '../../components/ui/MotionPrimitives';
 import { StrategyItem } from '../../services/chess/strategyLibrary';
@@ -65,34 +65,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
       {/* 3D Chess Mascot Background (Transparent watermark behind cards) */}
       <ChessMascotBackground />
 
-      {/* Glassmorphic Top App Bar */}
-      <View style={styles.glassAppbar}>
-        <KineticPressable
-          style={styles.leftSquircleBadge}
-          scaleTo={0.9}
-          hapticStyle="light"
-          onPress={onOpenMascot}
-          accessibilityLabel="Open 3D Mascot Studio"
-        >
-          <Box size={18} color="#FFFFFF" />
-        </KineticPressable>
-
-        <Text style={styles.appbarTitle}>CheckmateAR</Text>
-
-        <KineticPressable
-          style={styles.blendedPowerAction}
-          scaleTo={0.92}
-          hapticStyle="medium"
-          onPress={() => {
-            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
-            onStartScan();
-          }}
-          accessibilityLabel="Launch Full Power AR"
-        >
-          <Sparkles size={14} color="#FFFFFF" />
-          <Text style={styles.blendedPowerText}>AR Active</Text>
-        </KineticPressable>
-      </View>
+      {/* Textured GM Motivational Wisdom Header */}
+      <GMWisdomHeader onOpenMascot={onOpenMascot} onStartScan={() => onStartScan()} />
 
       {/* Glassmorphic 3-Pill Switcher: [ Start ] | [ Strategy ] | [ Vault ] */}
       <View style={styles.segmentedContainer}>
@@ -175,51 +149,6 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: '#000000',
-  },
-  glassAppbar: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: spacing.md,
-    paddingTop: spacing.md,
-    paddingBottom: spacing.sm,
-    backgroundColor: 'rgba(12, 12, 16, 0.78)',
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.08)',
-    zIndex: 10,
-  },
-  leftSquircleBadge: {
-    width: 38,
-    height: 38,
-    borderRadius: 12,
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.16)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  appbarTitle: {
-    color: '#FFFFFF',
-    fontSize: 16.5,
-    fontWeight: '800',
-    letterSpacing: -0.3,
-  },
-  blendedPowerAction: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: radii.pill,
-    backgroundColor: 'rgba(255, 255, 255, 0.14)',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.32)',
-  },
-  blendedPowerText: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: '800',
-    letterSpacing: -0.1,
   },
   segmentedContainer: {
     flexDirection: 'row',

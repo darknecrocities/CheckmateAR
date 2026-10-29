@@ -9,6 +9,7 @@ import { HistoryScreen } from '../features/history/HistoryScreen';
 import { SettingsScreen } from '../features/settings/SettingsScreen';
 import { MascotScreen } from '../features/mascot/MascotScreen';
 import { TacticalTrainerScreen } from '../features/trainer/TacticalTrainerScreen';
+import { WelcomeScreen } from '../features/welcome/WelcomeScreen';
 import { FloatingPillNavbar, NavTab } from '../components/navigation/FloatingPillNavbar';
 import { KineticRouteTransition } from '../components/ui/MotionPrimitives';
 import { StrategyItem } from '../services/chess/strategyLibrary';
@@ -16,6 +17,7 @@ import { EngineEvaluation } from '../types/stockfish';
 import { StudySession } from '../types/study';
 
 export type AppRoute =
+  | 'welcome'
   | 'home'
   | 'scan'
   | 'analysis'
@@ -89,13 +91,20 @@ export default function AppRoot() {
       ? 'settings'
       : 'home';
 
-  const showNavbar = currentRoute !== 'scan' && currentRoute !== 'analysis';
+  const showNavbar =
+    currentRoute !== 'scan' &&
+    currentRoute !== 'analysis' &&
+    currentRoute !== 'welcome';
 
   return (
     <View style={styles.container}>
       <StatusBar hidden={true} barStyle="light-content" />
 
       <KineticRouteTransition routeKey={currentRoute}>
+        {currentRoute === 'welcome' && (
+          <WelcomeScreen onComplete={() => setCurrentRoute('home')} />
+        )}
+
         {currentRoute === 'home' && (
           <HomeScreen
             onStartScan={(fen, title) => navigateToScan(fen, title)}

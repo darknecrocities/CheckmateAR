@@ -18,9 +18,11 @@ import { classifyGridToFen } from '../../services/vision/colorAgnosticClassifier
 import { LiveStreamCamera, BoardStreamData } from '../../components/camera/LiveStreamCamera';
 import { ARPerspectiveBoard } from '../../components/ar/ARPerspectiveBoard';
 import { ARSegmentationOverlay } from '../../components/ar/ARSegmentationOverlay';
+import { ARScanningReticle } from '../../components/ar/ARScanningReticle';
 import { ARTopHud } from '../../components/ar/ARTopHud';
 import { ARFloatingCommandDock } from '../../components/ar/ARFloatingCommandDock';
 import { ARCorrectionModal } from '../../components/ar/ARCorrectionModal';
+import { ARSideSelectorModal } from '../../components/ar/ARSideSelectorModal';
 import { colors } from '../../theme/colors';
 import { spacing, radii } from '../../theme/spacing';
 import { typography } from '../../theme/typography';
@@ -50,14 +52,15 @@ export const ScanScreen: React.FC<ScanScreenProps> = ({
   onBackToHome,
 }) => {
   const [permission, requestPermission] = useCameraPermissions();
+  const [isBoardDetected, setIsBoardDetected] = useState<boolean>(Boolean(initialFen));
   const [isWhiteBottom, setIsWhiteBottom] = useState<boolean>(true);
   const [playerSide, setPlayerSide] = useState<'white' | 'black'>('white');
-  const [showSideSelector, setShowSideSelector] = useState<boolean>(!initialFen);
+  const [showSideSelector, setShowSideSelector] = useState<boolean>(false);
   const [isFrozen, setIsFrozen] = useState<boolean>(false);
   const [isLocked, setIsLocked] = useState<boolean>(false);
   const [showBoardMask, setShowBoardMask] = useState<boolean>(true);
   const [showPieceBoxes, setShowPieceBoxes] = useState<boolean>(false);
-  const [boardConfidence, setBoardConfidence] = useState<number>(0.97);
+  const [boardConfidence, setBoardConfidence] = useState<number>(initialFen ? 0.97 : 0.0);
   const [strategyCursor, setStrategyCursor] = useState<number>(0);
 
   const [selectedSquare, setSelectedSquare] = useState<SquareCoord | null>(null);
@@ -65,7 +68,9 @@ export const ScanScreen: React.FC<ScanScreenProps> = ({
   const [statusMsg, setStatusMsg] = useState<string>(
     strategyTitle
       ? `AR Strategy Synced: ${strategyTitle}`
-      : '3-Stage Segmentation & Piece YOLO Active'
+      : initialFen
+      ? '3-Stage Segmentation Active'
+      : 'Scanning for Live Chessboard...'
   );
 
   const defaultCorners: QuadPoints = useMemo(
@@ -139,6 +144,13 @@ export const ScanScreen: React.FC<ScanScreenProps> = ({
       if (isLocked || isFrozen) return;
 
       if (streamData.isBoardFound) {
+        if (!isBoardDetected) {
+          setIsBoardDetected(true);
+          setShowSideSelector(true);
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+          setStatusMsg('Chessboard Locked • 64-Tile Mesh Active');
+        }
+
         const clampCorner = (pt: Point2D): Point2D => ({
           x: Math.max(18, Math.min(SCREEN_WIDTH - 18, pt.x)),
           y: Math.max(SCREEN_HEIGHT * 0.16, Math.min(SCREEN_HEIGHT * 0.64, pt.y)),
@@ -171,7 +183,7 @@ export const ScanScreen: React.FC<ScanScreenProps> = ({
         }
       }
     },
-    [isLocked, isFrozen, isWhiteBottom, currentFen]
+    [isLocked, isFrozen, isWhiteBottom, currentFen, isBoardDetected]
   );
 
   const handleCornerChange = (corner: keyof QuadPoints, newPoint: Point2D) => {
@@ -276,33 +288,43 @@ export const ScanScreen: React.FC<ScanScreenProps> = ({
         </View>
       )}
 
-      <ARSegmentationOverlay
-        segmentation={recognition.segmentation}
-        detections={recognition.detections}
-        showBoardMask={showBoardMask}
-        showPieceBoxes={showPieceBoxes}
-        width={SCREEN_WIDTH}
-        height={SCREEN_HEIGHT}
-      />
+      {isBoardDetected ? (
+        <>
+          <ARSegmentationOverlay
+            segmentation={recognition.segmentation}
+            detections={recognition.detections}
+            showBoardMask={showBoardMask}
+            showPieceBoxes={showPieceBoxes}
+            width={SCREEN_WIDTH}
+            height={SCREEN_HEIGHT}
+          />
 
-      <ARPerspectiveBoard
-        corners={corners}
-        homography={homography}
-        squares={squares}
-        bestMove={evaluation?.bestMove}
-        bestMoveSan={evaluation?.bestMoveSan}
-        candidates={evaluation?.candidates}
-        evalText={evalText}
-        isWhiteBottom={isWhiteBottom}
-        selectedSquare={selectedSquare}
-        isLocked={isLocked}
-        fen={currentFen}
-        onCornerChange={handleCornerChange}
-        onSquarePress={(sq) => {
-          setSelectedSquare(sq);
-          setCorrectionSquare(sq);
-        }}
-      />
+          <ARPerspectiveBoard
+            corners={corners}
+            homography={homography}
+            squares={squares}
+            bestMove={evaluation?.bestMove}
+            bestMoveSan={evaluation?.bestMoveSan}
+            candidates={evaluation?.candidates}
+            evalText={evalText}
+            isWhiteBottom={isWhiteBottom}
+            selectedSquare={selectedSquare}
+            isLocked={isLocked}
+            fen={currentFen}
+            onCornerChange={handleCornerChange}
+            onSquarePress={(sq) => {
+              setSelectedSquare(sq);
+              setCorrectionSquare(sq);
+            }}
+          />
+        </>
+      ) : (
+        <ARScanningReticle
+          width={SCREEN_WIDTH}
+          height={SCREEN_HEIGHT}
+          statusText="Scanning for Chessboard..."
+        />
+      )}
 
       <ARTopHud
         depth={evaluation?.depth || 14}
@@ -362,32 +384,7 @@ export const ScanScreen: React.FC<ScanScreenProps> = ({
       />
 
       {/* Interactive Playing Side Selector Modal (Asks user: White vs Black) */}
-      {showSideSelector && (
-        <View style={styles.sideSelectorBackdrop}>
-          <View style={styles.sideSelectorCard}>
-            <Text style={styles.sideSelectorTitle}>Which side are you playing?</Text>
-            <Text style={styles.sideSelectorSub}>
-              CheckmateAR orients live AR board coordinates and Stockfish best-move prediction to your side.
-            </Text>
-            <View style={styles.sideSelectorButtons}>
-              <TouchableOpacity
-                style={[styles.sideChoiceBtn, styles.sideChoiceWhite]}
-                onPress={() => handleSelectSide('white')}
-                activeOpacity={0.85}
-              >
-                <Text style={styles.sideChoiceWhiteText}>⚪ Play as White</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.sideChoiceBtn, styles.sideChoiceBlack]}
-                onPress={() => handleSelectSide('black')}
-                activeOpacity={0.85}
-              >
-                <Text style={styles.sideChoiceBlackText}>⚫ Play as Black</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      )}
+      <ARSideSelectorModal visible={showSideSelector} onSelectSide={handleSelectSide} />
     </View>
   );
 };
@@ -396,66 +393,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.dark.background,
-  },
-  sideSelectorBackdrop: {
-    ...StyleSheet.absoluteFill,
-    backgroundColor: 'rgba(0, 0, 0, 0.75)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: spacing.lg,
-    zIndex: 120,
-  },
-  sideSelectorCard: {
-    width: '100%',
-    maxWidth: 380,
-    backgroundColor: 'rgba(16, 16, 18, 0.96)',
-    borderRadius: radii.xl,
-    borderWidth: 1.2,
-    borderColor: 'rgba(255, 255, 255, 0.22)',
-    padding: spacing.xl,
-    alignItems: 'center',
-  },
-  sideSelectorTitle: {
-    ...typography.title1,
-    color: '#FFFFFF',
-    textAlign: 'center',
-    marginBottom: spacing.xs,
-  },
-  sideSelectorSub: {
-    ...typography.caption,
-    color: colors.dark.textSecondary,
-    textAlign: 'center',
-    lineHeight: 18,
-    marginBottom: spacing.lg,
-  },
-  sideSelectorButtons: {
-    width: '100%',
-    gap: spacing.sm,
-  },
-  sideChoiceBtn: {
-    width: '100%',
-    paddingVertical: 14,
-    borderRadius: radii.lg,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  sideChoiceWhite: {
-    backgroundColor: '#FFFFFF',
-  },
-  sideChoiceWhiteText: {
-    color: '#000000',
-    fontSize: 15,
-    fontWeight: '800',
-  },
-  sideChoiceBlack: {
-    backgroundColor: 'rgba(255, 255, 255, 0.12)',
-    borderWidth: 1.2,
-    borderColor: 'rgba(255, 255, 255, 0.35)',
-  },
-  sideChoiceBlackText: {
-    color: '#FFFFFF',
-    fontSize: 15,
-    fontWeight: '800',
   },
   cameraPlaceholder: {
     backgroundColor: '#09090B',
