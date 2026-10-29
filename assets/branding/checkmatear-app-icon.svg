@@ -1,18 +1,56 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
-  <!-- Dark Rounded Squircle Base -->
-  <rect width="512" height="512" rx="116" fill="#0A0B10"/>
-  
-  <!-- Subtle Internal Grid Matrix -->
-  <path d="M128 170 H384 M128 256 H384 M128 342 H384" stroke="#00E5FF" stroke-width="4" stroke-opacity="0.18"/>
-  <path d="M170 128 V384 M256 128 V384 M342 128 V384" stroke="#00E5FF" stroke-width="4" stroke-opacity="0.18"/>
+  <defs>
+    <linearGradient id="iconBg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#18181B"/>
+      <stop offset="60%" stop-color="#0E0E11"/>
+      <stop offset="100%" stop-color="#040405"/>
+    </linearGradient>
+    <linearGradient id="iconPlatinum" x1="0.1" y1="0" x2="0.9" y2="1">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="45%" stop-color="#E4E4E7"/>
+      <stop offset="85%" stop-color="#A1A1AA"/>
+      <stop offset="100%" stop-color="#71717A"/>
+    </linearGradient>
+    <radialGradient id="iconGlow" cx="50%" cy="40%" r="55%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.18"/>
+      <stop offset="60%" stop-color="#FFFFFF" stop-opacity="0.03"/>
+      <stop offset="100%" stop-color="#000000" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Squircle Base with 1px Specular Border -->
+  <rect width="512" height="512" rx="116" fill="url(#iconBg)"/>
+  <rect x="1" y="1" width="510" height="510" rx="115" stroke="#FFFFFF" stroke-width="2" stroke-opacity="0.22" fill="none"/>
+
+  <!-- Ambient Center Glow -->
+  <circle cx="256" cy="240" r="210" fill="url(#iconGlow)"/>
+
+  <!-- AR Perspective Matrix Grid Lines -->
+  <path d="M 120 180 H 392 M 120 256 H 392 M 120 332 H 392" stroke="#FFFFFF" stroke-width="2.5" stroke-opacity="0.12" stroke-dasharray="6 8"/>
+  <path d="M 180 120 V 392 M 256 120 V 392 M 332 120 V 392" stroke="#FFFFFF" stroke-width="2.5" stroke-opacity="0.12" stroke-dasharray="6 8"/>
 
   <!-- High-Precision AR HUD Corner Brackets -->
-  <path d="M96 160 V96 H160" stroke="#00E5FF" stroke-width="14" stroke-linecap="round"/>
-  <path d="M352 96 H416 V160" stroke="#00E5FF" stroke-width="14" stroke-linecap="round"/>
-  <path d="M416 352 V416 H352" stroke="#00E5FF" stroke-width="14" stroke-linecap="round"/>
-  <path d="M160 416 H96 V352" stroke="#00E5FF" stroke-width="14" stroke-linecap="round"/>
+  <path d="M 80 150 V 80 H 150" stroke="#FFFFFF" stroke-width="12" stroke-linecap="round"/>
+  <path d="M 362 80 H 432 V 150" stroke="#FFFFFF" stroke-width="12" stroke-linecap="round"/>
+  <path d="M 432 362 V 432 H 362" stroke="#FFFFFF" stroke-width="12" stroke-linecap="round"/>
+  <path d="M 150 432 H 80 V 362" stroke="#FFFFFF" stroke-width="12" stroke-linecap="round"/>
 
-  <!-- Iconic Knight Silhouette in Emerald -->
-  <path d="M190 380 H322 V356 C322 340 310 326 290 320 C296 300 302 264 296 230 C290 196 264 168 230 162 C222 162 216 168 216 182 C216 196 196 204 182 212 C168 220 162 240 168 260 C174 274 194 282 200 288 C194 316 190 344 190 380 Z" fill="#00E676" stroke="#00E676" stroke-width="6" stroke-linejoin="round"/>
-  <circle cx="236" cy="216" r="12" fill="#0A0B10"/>
+  <!-- Royal Crown Base Slab -->
+  <path d="M 136 380 H 376 L 350 412 H 162 Z" fill="#18181B" stroke="#FFFFFF" stroke-width="5" stroke-opacity="0.75"/>
+
+  <!-- Geometric Imperial Queen Coronet -->
+  <path d="M 148 360 L 130 220 L 200 274 L 256 150 L 312 274 L 382 220 L 364 360 Z" fill="url(#iconPlatinum)" stroke="#09090B" stroke-width="8" stroke-linejoin="round"/>
+
+  <!-- Knight Inner Contour Profile -->
+  <path d="M 230 360 V 270 C 230 248 250 236 264 224 C 272 216 286 230 286 244 C 274 258 280 274 286 284 L 286 360 Z" fill="#18181B" stroke="#FFFFFF" stroke-width="4" stroke-opacity="0.6"/>
+
+  <!-- Coronet Pearl Jewels -->
+  <circle cx="130" cy="208" r="16" fill="#FFFFFF"/>
+  <circle cx="200" cy="262" r="14" fill="#18181B" stroke="#FFFFFF" stroke-width="5"/>
+  <circle cx="256" cy="136" r="20" fill="#FFFFFF" stroke="#09090B" stroke-width="5"/>
+  <circle cx="312" cy="262" r="14" fill="#18181B" stroke="#FFFFFF" stroke-width="5"/>
+  <circle cx="382" cy="208" r="16" fill="#FFFFFF"/>
+
+  <!-- Center Spatial Diamond Reticle -->
+  <circle cx="256" cy="305" r="12" fill="#FFFFFF"/>
 </svg>

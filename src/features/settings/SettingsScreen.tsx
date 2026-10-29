@@ -10,7 +10,7 @@ import {
   Alert,
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
-import { ArrowLeft, Cpu, Moon, Vibrate, ShieldCheck, Trash2 } from 'lucide-react-native';
+import { ArrowLeft, Cpu, Moon, Vibrate, ShieldCheck, Trash2, Sparkles } from 'lucide-react-native';
 
 import { AppSettings } from '../../types/study';
 import { getAppSettings, saveAppSettings } from '../../services/storage/settingsStorage';
@@ -21,9 +21,10 @@ import { typography } from '../../theme/typography';
 
 interface SettingsScreenProps {
   onBack: () => void;
+  onOpenWelcome?: () => void;
 }
 
-export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onBack }) => {
+export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onBack, onOpenWelcome }) => {
   const [settings, setSettings] = useState<AppSettings | null>(null);
 
   useEffect(() => {
@@ -114,6 +115,25 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onBack }) => {
         </View>
 
         {/* Offline & Privacy Guarantees */}
+        <Text style={styles.sectionHeader}>Experience</Text>
+        {onOpenWelcome && (
+          <TouchableOpacity
+            style={[styles.card, styles.row]}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              onOpenWelcome();
+            }}
+          >
+            <View style={styles.rowLabelWrap}>
+              <Sparkles size={20} color="#FFFFFF" />
+              <View>
+                <Text style={styles.rowTitle}>Replay 3D Welcome Intro</Text>
+                <Text style={styles.rowSubtitle}>Experience the 3D spatial Queen and morph transitions</Text>
+              </View>
+            </View>
+          </TouchableOpacity>
+        )}
+
         <Text style={styles.sectionHeader}>Privacy & Diagnostics</Text>
         <View style={styles.card}>
           <View style={styles.row}>
