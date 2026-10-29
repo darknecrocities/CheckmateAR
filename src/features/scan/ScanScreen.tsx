@@ -53,7 +53,7 @@ export const ScanScreen: React.FC<ScanScreenProps> = ({
   const [isFrozen, setIsFrozen] = useState<boolean>(false);
   const [isLocked, setIsLocked] = useState<boolean>(false);
   const [showBoardMask, setShowBoardMask] = useState<boolean>(true);
-  const [showPieceBoxes, setShowPieceBoxes] = useState<boolean>(true);
+  const [showPieceBoxes, setShowPieceBoxes] = useState<boolean>(false);
   const [boardConfidence, setBoardConfidence] = useState<number>(0.97);
   const [strategyCursor, setStrategyCursor] = useState<number>(0);
 

@@ -16,16 +16,15 @@ export interface ARSegmentationOverlayProps {
 }
 
 /**
- * Renders the 3-Stage Computer Vision Overlay inspired by
- * dopaul/chess-board-segmentation and FloudMe77/Chess_Position_Recognition_System:
- *  - Stage 1: Royal-blue polygon segmentation mask + `chess_board 0.97` bounding box
- *  - Stage 3: 12-class YOLO piece bounding boxes (`white-knight 0.92`, `black-rook 0.97`, etc.)
+ * Clean Computer Vision AR Overlay:
+ *  - Royal-blue board segmentation polygon & boundary header
+ *  - Clean piece bounding boxes (without spammy text tags cluttering the board)
  */
 export const ARSegmentationOverlay: React.FC<ARSegmentationOverlayProps> = ({
   segmentation,
   detections,
   showBoardMask = true,
-  showPieceBoxes = true,
+  showPieceBoxes = false,
   width,
   height,
 }) => {
@@ -34,25 +33,25 @@ export const ARSegmentationOverlay: React.FC<ARSegmentationOverlayProps> = ({
     .join(' ');
 
   const { x: bx, y: by, width: bw, height: bh } = segmentation.boundingBox;
-  const boardHeaderLabel = `${segmentation.label} ${segmentation.confidence.toFixed(2)}`;
-  const boardLabelWidth = Math.max(96, boardHeaderLabel.length * 6.4);
-  const boardLabelY = Math.max(8, by - 20);
+  const boardHeaderLabel = `chess_board ${segmentation.confidence.toFixed(2)}`;
+  const boardLabelWidth = 104;
+  const boardLabelY = Math.max(8, by - 22);
 
   return (
     <View style={[StyleSheet.absoluteFill, { width, height }]} pointerEvents="none">
       <Svg width={width} height={height}>
-        {/* Stage 1: Chess Board Segmentation Polygon Mask + Bounding Box */}
+        {/* Stage 1: Chess Board Segmentation Polygon Mask */}
         {showBoardMask && (
           <G>
-            {/* Translucent Segmentation Mask over Board Polygon */}
+            {/* Translucent Board Segmentation Polygon */}
             <Polygon
               points={polygonPoints}
-              fill="rgba(37, 99, 235, 0.22)"
+              fill="rgba(37, 99, 235, 0.14)"
               stroke="#3B82F6"
-              strokeWidth={2}
+              strokeWidth={1.8}
             />
 
-            {/* Outer Axis-Aligned Bounding Box (dopaul / FloudMe77 style) */}
+            {/* Subtle Outer Axis-Aligned Bounding Box */}
             <Rect
               x={bx}
               y={by}
@@ -60,8 +59,9 @@ export const ARSegmentationOverlay: React.FC<ARSegmentationOverlayProps> = ({
               height={bh}
               fill="none"
               stroke="#2563EB"
-              strokeWidth={2.2}
-              strokeDasharray="6,3"
+              strokeWidth={1.5}
+              strokeDasharray="6,4"
+              opacity={0.7}
             />
 
             {/* Top-Left `chess_board 0.97` Classification Tag */}
@@ -69,15 +69,15 @@ export const ARSegmentationOverlay: React.FC<ARSegmentationOverlayProps> = ({
               x={bx}
               y={boardLabelY}
               width={boardLabelWidth}
-              height={20}
+              height={18}
               rx={3}
               fill="#2563EB"
             />
             <SvgText
               x={bx + 6}
-              y={boardLabelY + 14}
+              y={boardLabelY + 13}
               fill="#FFFFFF"
-              fontSize="11"
+              fontSize="10"
               fontWeight="800"
             >
               {boardHeaderLabel}
@@ -85,50 +85,23 @@ export const ARSegmentationOverlay: React.FC<ARSegmentationOverlayProps> = ({
           </G>
         )}
 
-        {/* Stage 3: 12-Class YOLO Piece Detection Bounding Boxes */}
+        {/* Minimal Piece Boundary Rings (Clean, zero text clutter) */}
         {showPieceBoxes &&
-          detections.map((det) => {
-            const label = `${det.className} ${det.confidence.toFixed(2)}`;
-            const tagW = Math.max(74, label.length * 5.2 + 8);
-            const tagH = 15;
-            const tagX = det.bbox.x;
-            const tagY = Math.max(4, det.bbox.y - tagH);
-
-            return (
-              <G key={det.id}>
-                {/* 3D Piece Bounding Box */}
-                <Rect
-                  x={det.bbox.x}
-                  y={det.bbox.y}
-                  width={det.bbox.width}
-                  height={det.bbox.height}
-                  fill="rgba(37, 99, 235, 0.08)"
-                  stroke={det.boxColor}
-                  strokeWidth={1.8}
-                  rx={2}
-                />
-
-                {/* YOLO Class + Confidence Pill Header */}
-                <Rect
-                  x={tagX}
-                  y={tagY}
-                  width={tagW}
-                  height={tagH}
-                  fill={det.boxColor}
-                  rx={2}
-                />
-                <SvgText
-                  x={tagX + 4}
-                  y={tagY + 11}
-                  fill="#FFFFFF"
-                  fontSize="8.5"
-                  fontWeight="800"
-                >
-                  {label}
-                </SvgText>
-              </G>
-            );
-          })}
+          detections.map((det) => (
+            <Rect
+              key={det.id}
+              x={det.bbox.x}
+              y={det.bbox.y}
+              width={det.bbox.width}
+              height={det.bbox.height}
+              fill="none"
+              stroke={det.boxColor}
+              strokeWidth={1.2}
+              strokeDasharray="4,3"
+              rx={3}
+              opacity={0.75}
+            />
+          ))}
       </Svg>
     </View>
   );

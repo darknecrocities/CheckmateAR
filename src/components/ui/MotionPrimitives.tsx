@@ -2,13 +2,15 @@ import React, { createContext, useContext, useEffect, useRef, useState } from 'r
 import {
   Animated,
   Easing,
-  TouchableOpacity,
+  Pressable,
   StyleProp,
   ViewStyle,
   StyleSheet,
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { motion } from '../../theme/motion';
+
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 /**
  * Context broadcasting whether a parent card/surface is currently pressed,
@@ -162,27 +164,24 @@ export const KineticPressable: React.FC<KineticPressableProps> = ({
 
   return (
     <KineticPressContext.Provider value={isPressed}>
-      <TouchableOpacity
-        activeOpacity={1}
+      <AnimatedPressable
         disabled={disabled || !onPress}
         onPressIn={handlePressIn}
         onPressOut={handlePressOut}
         onPress={onPress}
+        hitSlop={8}
         accessibilityLabel={accessibilityLabel}
         testID={testID}
+        style={[
+          style,
+          {
+            opacity: mountOpacity,
+            transform: [{ scale: combinedScale }, { translateY: combinedTranslateY }],
+          },
+        ]}
       >
-        <Animated.View
-          style={[
-            style,
-            {
-              opacity: mountOpacity,
-              transform: [{ scale: combinedScale }, { translateY: combinedTranslateY }],
-            },
-          ]}
-        >
-          {children}
-        </Animated.View>
-      </TouchableOpacity>
+        {children}
+      </AnimatedPressable>
     </KineticPressContext.Provider>
   );
 };

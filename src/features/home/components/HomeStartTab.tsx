@@ -1,8 +1,9 @@
 import React from 'react';
 import { View, Text, StyleSheet, Dimensions } from 'react-native';
+import { ArrowRight } from 'lucide-react-native';
 import { ChessPieceArtwork } from '../../../components/chess/ChessPieceArtwork';
 import { LiquidGlassCard } from '../../../components/ui/LiquidGlassCard';
-import { spacing } from '../../../theme/spacing';
+import { spacing, radii } from '../../../theme/spacing';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const GRID_CARD_WIDTH = (SCREEN_WIDTH - spacing.md * 2 - spacing.sm) / 2;
@@ -24,142 +25,131 @@ export const HomeStartTab: React.FC<HomeStartTabProps> = ({
   onOpenCoach,
   onOpenTrainer,
   onOpenHistory,
-  onSwitchToStrategy,
 }) => {
   return (
     <>
-      {/* Top Row: 2 Side-by-Side Light Tutorial Cards (Matching Reference Dashboard UI) */}
-      <Text style={styles.sectionHeader}>AR Tutorials</Text>
-      <View style={styles.tutorialRow}>
+      {/* Featured Card Section (Restored as requested) */}
+      <Text style={styles.sectionHeader}>Featured System</Text>
+      <LiquidGlassCard
+        variant="featured"
+        causticPosition="right"
+        staggerIndex={0}
+        style={styles.featuredCard}
+        onPress={onStartScan}
+      >
+        <View style={styles.featuredContent}>
+          <View style={styles.tagPill}>
+            <Text style={styles.tagPillText}>Live AR Vision</Text>
+          </View>
+          <Text style={styles.featuredTitle}>Real-Time Board Tracking</Text>
+          <View style={styles.actionArrowRow}>
+            <Text style={styles.actionArrowText}>Launch Camera</Text>
+            <ArrowRight size={14} color="#FFFFFF" />
+          </View>
+        </View>
+
+        {/* 3D Knight Artwork */}
+        <View style={styles.offsetPieceWrap} pointerEvents="none">
+          <ChessPieceArtwork piece="n" size={130} color="white" floatDelay={0} />
+        </View>
+      </LiquidGlassCard>
+
+      {/* 2-Column Clean Capability Cards (Zero dummy descriptions, zero '60 fps' text) */}
+      <Text style={[styles.sectionHeader, styles.recentSectionHeader]}>Core Capabilities</Text>
+      <View style={styles.pedestalGrid}>
+        {/* Card 1: AR Vision */}
         <LiquidGlassCard
-          variant="lightTutorial"
-          causticPosition="none"
-          staggerIndex={0}
-          style={styles.tutorialCard}
+          variant="pedestal"
+          causticPosition="center"
+          staggerIndex={1}
+          style={styles.pedestalCard}
           onPress={onStartScan}
         >
-          <Text style={styles.tutorialTitle}>Use AR Board &{'\n'}Segmentation</Text>
-          <View style={styles.tutorialOffsetPiece}>
-            <ChessPieceArtwork piece="n" size={74} color="black" floatDelay={0} />
+          <View style={styles.cardMetaWrap}>
+            <Text style={styles.cardTitle}>AR Vision</Text>
+          </View>
+          <View style={styles.pedestalPieceWrap} pointerEvents="none">
+            <ChessPieceArtwork piece="n" size={84} color="white" floatDelay={100} />
           </View>
         </LiquidGlassCard>
 
-        <LiquidGlassCard
-          variant="lightTutorial"
-          causticPosition="none"
-          staggerIndex={1}
-          style={styles.tutorialCard}
-          onPress={onSwitchToStrategy ?? onOpenTrainer ?? onOpenAnalysis}
-        >
-          <Text style={styles.tutorialTitle}>How to Predict{'\n'}Moves Effectively</Text>
-          <View style={styles.tutorialOffsetPiece}>
-            <ChessPieceArtwork piece="q" size={74} color="black" floatDelay={180} />
-          </View>
-        </LiquidGlassCard>
-      </View>
-
-      {/* Bottom Section: 2-Column Dark Pedestal Cards (Matching "My Recent" Reference Layout) */}
-      <Text style={[styles.sectionHeader, styles.recentSectionHeader]}>My Recent</Text>
-      <View style={styles.pedestalGrid}>
-        {/* Pedestal Card 1: Live AR Board Segmentation & YOLO */}
+        {/* Card 2: Engine Spar */}
         <LiquidGlassCard
           variant="pedestal"
           causticPosition="center"
           staggerIndex={2}
           style={styles.pedestalCard}
-          onPress={onStartScan}
+          onPress={onOpenAnalysis}
         >
           <View style={styles.cardMetaWrap}>
-            <Text style={styles.cardSubtitle}>YOLO11 • 60 FPS</Text>
-            <Text style={styles.cardTitle}>AR Vision</Text>
+            <Text style={styles.cardTitle}>Engine Spar</Text>
           </View>
-          <View style={styles.pedestalPieceWrap}>
-            <ChessPieceArtwork piece="n" size={84} color="white" floatDelay={120} />
+          <View style={styles.pedestalPieceWrap} pointerEvents="none">
+            <ChessPieceArtwork piece="q" size={84} color="white" floatDelay={200} />
           </View>
         </LiquidGlassCard>
 
-        {/* Pedestal Card 2: Deep Stockfish Engine */}
+        {/* Card 3: Tactical Rush */}
         <LiquidGlassCard
           variant="pedestal"
           causticPosition="center"
           staggerIndex={3}
           style={styles.pedestalCard}
-          onPress={onOpenAnalysis}
+          onPress={onOpenTrainer ?? onOpenAnalysis}
         >
           <View style={styles.cardMetaWrap}>
-            <Text style={styles.cardSubtitle}>Depth 14 Multi-PV</Text>
-            <Text style={styles.cardTitle}>Engine Spar</Text>
+            <Text style={styles.cardTitle}>Tactical Rush</Text>
           </View>
-          <View style={styles.pedestalPieceWrap}>
-            <ChessPieceArtwork piece="q" size={84} color="white" floatDelay={260} />
+          <View style={styles.pedestalPieceWrap} pointerEvents="none">
+            <ChessPieceArtwork piece="r" size={84} color="white" floatDelay={300} />
           </View>
         </LiquidGlassCard>
 
-        {/* Pedestal Card 3: Interactive Tactical Trainer */}
+        {/* Card 4: AI Coach */}
         <LiquidGlassCard
           variant="pedestal"
           causticPosition="center"
           staggerIndex={4}
           style={styles.pedestalCard}
-          onPress={onOpenTrainer ?? onOpenAnalysis}
+          onPress={onOpenCoach}
         >
           <View style={styles.cardMetaWrap}>
-            <Text style={styles.cardSubtitle}>25 GM Studies</Text>
-            <Text style={styles.cardTitle}>Tactical Rush</Text>
+            <Text style={styles.cardTitle}>AI Coach</Text>
           </View>
-          <View style={styles.pedestalPieceWrap}>
-            <ChessPieceArtwork piece="r" size={84} color="white" floatDelay={400} />
+          <View style={styles.pedestalPieceWrap} pointerEvents="none">
+            <ChessPieceArtwork piece="k" size={84} color="white" floatDelay={400} />
           </View>
         </LiquidGlassCard>
 
-        {/* Pedestal Card 4: AI Tactical Coach */}
+        {/* Card 5: 3D Mascot */}
         <LiquidGlassCard
           variant="pedestal"
           causticPosition="center"
           staggerIndex={5}
           style={styles.pedestalCard}
-          onPress={onOpenCoach}
+          onPress={onOpenMascot}
         >
           <View style={styles.cardMetaWrap}>
-            <Text style={styles.cardSubtitle}>Grounded Mentor</Text>
-            <Text style={styles.cardTitle}>AI Coach</Text>
+            <Text style={styles.cardTitle}>3D Mascot</Text>
           </View>
-          <View style={styles.pedestalPieceWrap}>
-            <ChessPieceArtwork piece="k" size={84} color="white" floatDelay={540} />
+          <View style={styles.pedestalPieceWrap} pointerEvents="none">
+            <ChessPieceArtwork piece="b" size={84} color="white" floatDelay={500} />
           </View>
         </LiquidGlassCard>
 
-        {/* Pedestal Card 5: 3D Mascot Studio */}
+        {/* Card 6: Match Vault */}
         <LiquidGlassCard
           variant="pedestal"
           causticPosition="center"
           staggerIndex={6}
           style={styles.pedestalCard}
-          onPress={onOpenMascot}
-        >
-          <View style={styles.cardMetaWrap}>
-            <Text style={styles.cardSubtitle}>360° CAD Orbit</Text>
-            <Text style={styles.cardTitle}>3D Mascot</Text>
-          </View>
-          <View style={styles.pedestalPieceWrap}>
-            <ChessPieceArtwork piece="b" size={84} color="white" floatDelay={680} />
-          </View>
-        </LiquidGlassCard>
-
-        {/* Pedestal Card 6: Saved Match & Study Vault */}
-        <LiquidGlassCard
-          variant="pedestal"
-          causticPosition="center"
-          staggerIndex={7}
-          style={styles.pedestalCard}
           onPress={onOpenHistory ?? onOpenAnalysis}
         >
           <View style={styles.cardMetaWrap}>
-            <Text style={styles.cardSubtitle}>Offline PGN</Text>
             <Text style={styles.cardTitle}>Match Vault</Text>
           </View>
-          <View style={styles.pedestalPieceWrap}>
-            <ChessPieceArtwork piece="p" size={84} color="white" floatDelay={820} />
+          <View style={styles.pedestalPieceWrap} pointerEvents="none">
+            <ChessPieceArtwork piece="p" size={84} color="white" floatDelay={600} />
           </View>
         </LiquidGlassCard>
       </View>
@@ -170,37 +160,62 @@ export const HomeStartTab: React.FC<HomeStartTabProps> = ({
 const styles = StyleSheet.create({
   sectionHeader: {
     color: '#A1A1AA',
-    fontSize: 13,
-    fontWeight: '600',
-    letterSpacing: -0.1,
-    marginBottom: 10,
+    fontSize: 12.5,
+    fontWeight: '700',
+    letterSpacing: 0.2,
+    marginBottom: 8,
+    marginTop: 4,
   },
   recentSectionHeader: {
-    marginTop: 22,
+    marginTop: 18,
   },
-  tutorialRow: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-  },
-  tutorialCard: {
-    width: GRID_CARD_WIDTH,
-    padding: 14,
-    height: 112,
+  featuredCard: {
+    padding: spacing.lg,
     position: 'relative',
+    minHeight: 148,
+    justifyContent: 'center',
+    marginBottom: 6,
   },
-  tutorialTitle: {
-    color: '#09090B',
-    fontSize: 14.5,
-    fontWeight: '800',
-    lineHeight: 19,
-    letterSpacing: -0.2,
-    width: '74%',
+  featuredContent: {
+    width: '68%',
+    gap: 8,
     zIndex: 2,
   },
-  tutorialOffsetPiece: {
+  tagPill: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    backgroundColor: 'rgba(59, 130, 246, 0.2)',
+    borderRadius: radii.sm,
+    borderWidth: 1,
+    borderColor: 'rgba(59, 130, 246, 0.4)',
+  },
+  tagPillText: {
+    color: '#60A5FA',
+    fontSize: 10,
+    fontWeight: '800',
+  },
+  featuredTitle: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: '800',
+    lineHeight: 22,
+  },
+  actionArrowRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: 2,
+  },
+  actionArrowText: {
+    color: '#FFFFFF',
+    fontSize: 12.5,
+    fontWeight: '700',
+  },
+  offsetPieceWrap: {
     position: 'absolute',
     right: -12,
-    bottom: -10,
+    bottom: -8,
     zIndex: 1,
   },
   pedestalGrid: {
@@ -210,18 +225,12 @@ const styles = StyleSheet.create({
   },
   pedestalCard: {
     width: GRID_CARD_WIDTH,
-    height: 174,
+    height: 154,
     padding: 14,
     position: 'relative',
   },
   cardMetaWrap: {
-    gap: 2,
     zIndex: 2,
-  },
-  cardSubtitle: {
-    color: '#71717A',
-    fontSize: 11,
-    fontWeight: '600',
   },
   cardTitle: {
     color: '#FFFFFF',
@@ -233,7 +242,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: 0,
     right: 0,
-    bottom: 22,
+    bottom: 14,
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 2,

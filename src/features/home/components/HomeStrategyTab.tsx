@@ -80,14 +80,14 @@ export const HomeStrategyTab: React.FC<HomeStrategyTabProps> = ({
 
   return (
     <>
-      {/* Instant Search Bar & Saved Bookmarks Toggle */}
+      {/* Search Bar & Saved Bookmarks Toggle */}
       <View style={styles.searchRow}>
         <View style={styles.searchInputWrap}>
           <Search size={14} color="#737373" />
           <TextInput
             value={searchQuery}
             onChangeText={setSearchQuery}
-            placeholder="Search 25 openings, sacrifices, endgames..."
+            placeholder="Search openings, tactics, endgames..."
             placeholderTextColor="#525252"
             style={styles.searchInput}
           />
@@ -143,7 +143,7 @@ export const HomeStrategyTab: React.FC<HomeStrategyTabProps> = ({
         ))}
       </ScrollView>
 
-      {/* Strategy Cards List with Prediction Arrow Indicator & Glare Sweep */}
+      {/* Clean Strategy Cards List (Zero dummy paragraph clutter) */}
       <View style={styles.strategyList}>
         {filteredStrategies.map((item: StrategyItem, idx: number) => {
           const isSaved = bookmarkedIds.includes(item.id);
@@ -176,14 +176,11 @@ export const HomeStrategyTab: React.FC<HomeStrategyTabProps> = ({
 
                 <Text style={styles.strategyTitle}>{item.title}</Text>
                 <Text style={styles.strategyMoves}>{item.moves}</Text>
-                <Text style={styles.strategyConcept} numberOfLines={2}>
-                  {item.concept}
-                </Text>
 
                 <View style={styles.analyzeActionRow}>
                   <PlayCircle size={13} color="#10B981" />
                   <Text style={styles.analyzeActionText}>
-                    Play with Move Prediction Arrow
+                    Play Move Prediction
                   </Text>
                   <ChevronRight size={14} color="#10B981" />
                 </View>
@@ -205,11 +202,11 @@ export const HomeStrategyTab: React.FC<HomeStrategyTabProps> = ({
                 </KineticPressable>
               </View>
 
-              {/* Offset 3D Chess Piece with Fade Texture & Counter-Parallax */}
-              <View style={styles.strategyOffsetPiece}>
+              {/* Offset 3D Chess Piece */}
+              <View style={styles.strategyOffsetPiece} pointerEvents="none">
                 <ChessPieceArtwork
                   piece={item.featuredPiece}
-                  size={96}
+                  size={92}
                   color="white"
                   floatDelay={idx * 140}
                 />
@@ -322,7 +319,7 @@ const styles = StyleSheet.create({
   strategyCard: {
     padding: spacing.md,
     position: 'relative',
-    minHeight: 158,
+    minHeight: 124,
   },
   strategyContent: {
     width: '75%',
@@ -378,17 +375,11 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     fontFamily: 'monospace',
   },
-  strategyConcept: {
-    color: '#A1A1AA',
-    fontSize: 11,
-    lineHeight: 15,
-    marginTop: 2,
-  },
   analyzeActionRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
-    marginTop: 6,
+    marginTop: 4,
   },
   analyzeActionText: {
     color: '#10B981',

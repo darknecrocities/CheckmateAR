@@ -120,6 +120,7 @@ const styles = StyleSheet.create({
     bottom: spacing.lg,
     left: 0,
     right: 0,
+    height: 64,
     alignItems: 'center',
     zIndex: 50,
   },
@@ -168,6 +169,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 8,
     elevation: 10,
-    transform: [{ translateY: -4 }],
+    marginTop: -8,
   },
 });

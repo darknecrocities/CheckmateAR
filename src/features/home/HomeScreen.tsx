@@ -14,6 +14,7 @@ import { Sparkles, Box } from 'lucide-react-native';
 
 import { HomeStartTab } from './components/HomeStartTab';
 import { HomeStrategyTab } from './components/HomeStrategyTab';
+import { ChessMascotBackground } from '../../components/mascot/ChessMascotBackground';
 import { KineticPressable } from '../../components/ui/MotionPrimitives';
 import { StrategyItem } from '../../services/chess/strategyLibrary';
 import { motion } from '../../theme/motion';
@@ -57,8 +58,11 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      {/* Blended Minimal Appbar (Matching Reference Dashboard UI) */}
-      <View style={styles.topHeader}>
+      {/* 3D Chess Mascot Background (Transparent watermark behind cards) */}
+      <ChessMascotBackground />
+
+      {/* Glassmorphic Top App Bar */}
+      <View style={styles.glassAppbar}>
         <KineticPressable
           style={styles.leftSquircleBadge}
           scaleTo={0.9}
@@ -68,6 +72,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         >
           <Box size={18} color="#FFFFFF" />
         </KineticPressable>
+
+        <Text style={styles.appbarTitle}>CheckmateAR</Text>
 
         <KineticPressable
           style={styles.blendedPowerAction}
@@ -79,12 +85,12 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           }}
           accessibilityLabel="Launch Full Power AR"
         >
-          <Sparkles size={15} color="#FFFFFF" />
-          <Text style={styles.blendedPowerText}>Full Power</Text>
+          <Sparkles size={14} color="#60A5FA" />
+          <Text style={styles.blendedPowerText}>AR Active</Text>
         </KineticPressable>
       </View>
 
-      {/* Simple Blended Dual-Pill Switcher: [ Start ] vs [ Strategy ] */}
+      {/* Glassmorphic Dual-Pill Switcher: [ Start ] vs [ Strategy ] */}
       <View style={styles.segmentedContainer}>
         <Animated.View
           style={[
@@ -149,68 +155,82 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#000000',
   },
-  topHeader: {
+  glassAppbar: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: spacing.md,
     paddingTop: spacing.md,
     paddingBottom: spacing.sm,
-    backgroundColor: '#000000',
+    backgroundColor: 'rgba(12, 12, 16, 0.78)',
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.08)',
+    zIndex: 10,
   },
   leftSquircleBadge: {
-    width: 42,
-    height: 42,
-    borderRadius: 14,
-    backgroundColor: '#121215',
+    width: 38,
+    height: 38,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.09)',
+    borderColor: 'rgba(255, 255, 255, 0.16)',
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  appbarTitle: {
+    color: '#FFFFFF',
+    fontSize: 16.5,
+    fontWeight: '800',
+    letterSpacing: -0.3,
   },
   blendedPowerAction: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 5,
     paddingHorizontal: 10,
-    paddingVertical: 8,
+    paddingVertical: 6,
+    borderRadius: radii.pill,
+    backgroundColor: 'rgba(59, 130, 246, 0.16)',
+    borderWidth: 1,
+    borderColor: 'rgba(59, 130, 246, 0.35)',
   },
   blendedPowerText: {
-    color: '#FFFFFF',
-    fontSize: 13.5,
-    fontWeight: '700',
+    color: '#60A5FA',
+    fontSize: 12,
+    fontWeight: '800',
     letterSpacing: -0.1,
   },
   segmentedContainer: {
     flexDirection: 'row',
     marginHorizontal: spacing.md,
-    marginTop: 4,
-    marginBottom: spacing.md,
-    backgroundColor: '#0E0E11',
+    marginTop: spacing.xs,
+    marginBottom: spacing.sm,
+    backgroundColor: 'rgba(18, 18, 22, 0.85)',
     borderRadius: radii.pill,
-    padding: 4,
+    padding: 3.5,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
+    borderColor: 'rgba(255, 255, 255, 0.12)',
     position: 'relative',
+    zIndex: 10,
   },
   slidingIndicator: {
     position: 'absolute',
-    top: 4,
-    bottom: 4,
-    left: 4,
+    top: 3.5,
+    bottom: 3.5,
+    left: 3.5,
     backgroundColor: '#EAF7F0',
     borderRadius: radii.pill,
   },
   segmentBtn: {
     flex: 1,
-    paddingVertical: 11,
+    paddingVertical: 10,
     borderRadius: radii.pill,
     alignItems: 'center',
     zIndex: 2,
   },
   segmentText: {
     color: '#A1A1AA',
-    fontSize: 13.5,
+    fontSize: 13,
     fontWeight: '700',
   },
   activeSegmentText: {
@@ -219,10 +239,11 @@ const styles = StyleSheet.create({
   },
   scroll: {
     flex: 1,
+    zIndex: 5,
   },
   scrollContent: {
     paddingHorizontal: spacing.md,
-    paddingTop: 2,
+    paddingTop: 6,
     paddingBottom: 118,
   },
 });

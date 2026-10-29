@@ -21,15 +21,14 @@ interface LiveStreamCameraProps {
   style?: ViewProps['style'];
 }
 
-// Native CameraX ViewManager component for Android
 const NativeLiveCameraView =
   Platform.OS === 'android'
     ? requireNativeComponent<ViewProps>('LiveCameraView')
     : null;
 
 /**
- * High-performance live video streaming camera.
- * Streams direct Y-plane frames at 15-20 FPS with zero shutter sound and zero preview stutter.
+ * High-performance live video streaming camera with guaranteed live preview visibility.
+ * Renders back-facing CameraView and attaches CameraX frame analysis.
  */
 export const LiveStreamCamera: React.FC<LiveStreamCameraProps> = ({
   onBoardStream,
@@ -64,10 +63,17 @@ export const LiveStreamCamera: React.FC<LiveStreamCameraProps> = ({
     };
   }, []);
 
-  if (NativeLiveCameraView) {
-    return <NativeLiveCameraView style={[StyleSheet.absoluteFill, style]} />;
-  }
-
-  // Graceful fallback for non-Android / simulators
-  return <CameraView style={[StyleSheet.absoluteFill, style]} facing="back" />;
+  return (
+    <View style={[StyleSheet.absoluteFill, style]}>
+      {/* Guaranteed visible live camera preview */}
+      <CameraView style={StyleSheet.absoluteFill} facing="back" />
+      {/* Native analyzer attachment */}
+      {NativeLiveCameraView && (
+        <NativeLiveCameraView
+          style={[StyleSheet.absoluteFill, { opacity: 0.01 }]}
+          pointerEvents="none"
+        />
+      )}
+    </View>
+  );
 };

@@ -47,12 +47,23 @@ class LiveCameraView @JvmOverloads constructor(
         startCamera()
     }
 
+    private fun getLifecycleOwner(): LifecycleOwner? {
+        var ctx = context
+        while (ctx is android.content.ContextWrapper) {
+            if (ctx is LifecycleOwner) {
+                return ctx
+            }
+            ctx = ctx.baseContext
+        }
+        return (context as? ThemedReactContext)?.currentActivity as? LifecycleOwner
+    }
+
     private fun startCamera() {
         val cameraProviderFuture = ProcessCameraProvider.getInstance(context)
         cameraProviderFuture.addListener({
             try {
                 val cameraProvider = cameraProviderFuture.get()
-                val lifecycleOwner = context as? LifecycleOwner ?: return@addListener
+                val lifecycleOwner = getLifecycleOwner() ?: return@addListener
 
                 val preview = Preview.Builder().build().also {
                     it.setSurfaceProvider(previewView.surfaceProvider)
